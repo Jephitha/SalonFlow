@@ -1,11 +1,28 @@
+# Android build
 .gradle/
 build/
 app/build/
 local.properties
 *.iml
-.idea/
-.DS_Store
-.kotlin/
-*.hprof
 captures/
+*.hprof
 
+# IDE
+.idea/
+.kotlin/
+
+# OS
+.DS_Store
+
+# Secrets (DO NOT COMMIT)
+app/salonflow-release.keystore
+
+# Generated artifacts
+apk-download-qr.png
+icon.png
+
+# Internal docs
+HANDOVER.md
+
+# Empty remnant directories
+project/
