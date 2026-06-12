@@ -19,9 +19,13 @@ public class BackupReceiver extends BroadcastReceiver {
         try {
             SalonDatabase database = new SalonDatabase(context);
             database.backupNow();
-            NotificationRepository.getInstance(context).add("backup_success", "Backup Successful", "Daily backup completed at " + timestamp);
+            String msg = "Daily backup completed at " + timestamp;
+            NotificationRepository.getInstance(context).add("backup_success", "Backup Successful", msg);
+            ReminderReceiver.postNotification(context, 3201, "Backup Successful", msg);
         } catch (Exception e) {
-            NotificationRepository.getInstance(context).add("backup_failure", "Backup Failed", "Error: " + e.getMessage());
+            String msg = "Error: " + e.getMessage();
+            NotificationRepository.getInstance(context).add("backup_failure", "Backup Failed", msg);
+            ReminderReceiver.postNotification(context, 3202, "Backup Failed", msg);
             return;
         }
 

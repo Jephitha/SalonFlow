@@ -30,16 +30,18 @@ public class ReminderReceiver extends BroadcastReceiver {
         if (settings.notifyMorningBookings()) {
             List<SalonDatabase.Booking> morningBookings = morningBookingsToday(db);
             if (!morningBookings.isEmpty()) {
-                postNotification(context, 3101, "Morning bookings",
-                        "You have " + morningBookings.size() + " booking(s) before 11:00 AM today.");
+                String msg = "You have " + morningBookings.size() + " booking(s) before 11:00 AM today.";
+                postNotification(context, 3101, "Morning bookings", msg);
+                NotificationRepository.getInstance(context).add("morning_bookings", "Morning bookings", msg);
             }
         }
 
         if (settings.notifyOverdueSevenDays()) {
             int overdueCount = overdueForExactlySevenDays(db);
             if (overdueCount > 0) {
-                postNotification(context, 3102, "Overdue payments",
-                        overdueCount + " payment(s) reached 7 days overdue.");
+                String msg = overdueCount + " payment(s) reached 7 days overdue.";
+                postNotification(context, 3102, "Overdue payments", msg);
+                NotificationRepository.getInstance(context).add("overdue", "Overdue payments", msg);
             }
         }
 
@@ -126,7 +128,7 @@ public class ReminderReceiver extends BroadcastReceiver {
         }
     }
 
-    private void postNotification(Context context, int id, String title, String message) {
+    static void postNotification(Context context, int id, String title, String message) {
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager == null) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

@@ -1,10 +1,10 @@
 package com.salonflow.app
 
 import android.view.View
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,9 +29,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -55,8 +55,30 @@ object ReportsComposeFactory {
 
 @Composable
 private fun ReportsScreen(database: SalonDatabase) {
+    val context = LocalContext.current
     val money = NumberFormat.getCurrencyInstance(Locale("en", "KE")).apply { maximumFractionDigits = 0 }
     var reportMonth by remember { mutableStateOf(Calendar.getInstance()) }
+    var showOutstanding by remember { mutableStateOf(false) }
+    var showSales by remember { mutableStateOf(false) }
+    var showExpenses by remember { mutableStateOf(false) }
+    var showCommission by remember { mutableStateOf(false) }
+
+    if (showOutstanding) {
+        OutstandingScreen(database = database, money = money, onBack = { showOutstanding = false })
+        return
+    }
+    if (showSales) {
+        SalesDetailScreen(database = database, reportMonth = reportMonth, money = money, onBack = { showSales = false })
+        return
+    }
+    if (showExpenses) {
+        ExpensesDetailScreen(database = database, reportMonth = reportMonth, money = money, onBack = { showExpenses = false })
+        return
+    }
+    if (showCommission) {
+        CommissionDetailScreen(database = database, reportMonth = reportMonth, money = money, onBack = { showCommission = false })
+        return
+    }
 
     val monthStart = SalonUtils.monthStart(reportMonth)
     val monthEnd = SalonUtils.monthEnd(reportMonth)
@@ -118,18 +140,6 @@ private fun ReportsScreen(database: SalonDatabase) {
     }
     val svcRevenue = svcRevenueMap.entries.sortedByDescending { it.value }.associate { it.key to money.format(it.value / 100.0) }
 
-    // Stylist revenue
-    val stylistRevMap = mutableMapOf<String, Double>()
-    for (s in database.stylists()) stylistRevMap[s.name] = 0.0
-    for (b in monthBookings) {
-        if (b.status == "cancelled") continue
-        stylistRevMap[b.stylistName] = (stylistRevMap[b.stylistName] ?: 0.0) + b.amount
-    }
-    for (s in monthSales) {
-        if (s.stylistName.isNotEmpty()) stylistRevMap[s.stylistName] = (stylistRevMap[s.stylistName] ?: 0.0) + s.amount
-    }
-    val stylistRev = stylistRevMap.filter { it.value > 0 }.entries.sortedByDescending { it.value }.associate { it.key to money.format(it.value / 100.0) }
-
     // Stylist commission
     val stylistCommMap = mutableMapOf<String, Double>()
     for (s in database.stylists()) stylistCommMap[s.name] = 0.0
@@ -156,46 +166,6 @@ private fun ReportsScreen(database: SalonDatabase) {
     val pmTotal = max(1.0, cashTotal + mobileTotal)
     val cashPct = ((cashTotal / pmTotal) * 100).toInt()
     val mobilePct = 100 - cashPct
-
-    // Overdue aging
-    val allBookings = database.bookingsBetween("2000-01-01", today)
-    val allSales = database.salesBetween("2000-01-01", today)
-    var d0to6 = 0; var a0to6 = 0.0
-    var d7to13 = 0; var a7to13 = 0.0
-    var d14to29 = 0; var a14to29 = 0.0
-    var d30plus = 0; var a30plus = 0.0
-    fun overdueDays(dueDate: String): Int {
-        if (dueDate.isBlank()) return 0
-        return try {
-            val due = SalonUtils.DATE_FMT.get()!!.parse(dueDate)!!.time
-            val now = SalonUtils.DATE_FMT.get()!!.parse(today)!!.time
-            max(0, ((now - due) / (24L * 60L * 60L * 1000L)).toInt())
-        } catch (_: Exception) { 0 }
-    }
-    fun balance(amount: Double, paid: Double) = max(0.0, amount - paid)
-    for (b in allBookings) {
-        if (b.status == "cancelled") continue
-        val bal = balance(b.amount, b.paidAmount)
-        if (bal <= 0) continue
-        val days = overdueDays(b.dueDate)
-        when {
-            days <= 6 -> { d0to6++; a0to6 += bal }
-            days <= 13 -> { d7to13++; a7to13 += bal }
-            days <= 29 -> { d14to29++; a14to29 += bal }
-            else -> { d30plus++; a30plus += bal }
-        }
-    }
-    for (s in allSales) {
-        val bal = balance(s.amount, s.paidAmount)
-        if (bal <= 0) continue
-        val days = overdueDays(s.dueDate)
-        when {
-            days <= 6 -> { d0to6++; a0to6 += bal }
-            days <= 13 -> { d7to13++; a7to13 += bal }
-            days <= 29 -> { d14to29++; a14to29 += bal }
-            else -> { d30plus++; a30plus += bal }
-        }
-    }
 
     Surface(color = Color.White, modifier = Modifier.fillMaxWidth()) {
         LazyColumn(
@@ -260,6 +230,10 @@ private fun ReportsScreen(database: SalonDatabase) {
                         note = "Walk-in sales",
                         valueColor = Brand,
                         modifier = Modifier.weight(1f),
+                        onClick = {
+                            if (grossSales > 0) showSales = true
+                            else Toast.makeText(context, "No sales this month", Toast.LENGTH_SHORT).show()
+                        },
                     )
                 }
             }
@@ -280,6 +254,10 @@ private fun ReportsScreen(database: SalonDatabase) {
                         note = "Operating costs",
                         valueColor = Danger,
                         modifier = Modifier.weight(1f),
+                        onClick = {
+                            if (expenses > 0) showExpenses = true
+                            else Toast.makeText(context, "No expenses this month", Toast.LENGTH_SHORT).show()
+                        },
                     )
                 }
             }
@@ -288,10 +266,10 @@ private fun ReportsScreen(database: SalonDatabase) {
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     KpiCard(
-                        title = "Commission",
-                        value = money.format(commission / 100.0),
-                        note = "Stylist payouts",
-                        valueColor = Accent,
+                        title = "Stock purchases",
+                        value = money.format(stockPurchases / 100.0),
+                        note = "Product costs",
+                        valueColor = Muted,
                         modifier = Modifier.weight(1f),
                     )
                     KpiCard(
@@ -300,6 +278,10 @@ private fun ReportsScreen(database: SalonDatabase) {
                         note = "Unpaid balances",
                         valueColor = Accent,
                         modifier = Modifier.weight(1f),
+                        onClick = {
+                            if (outstanding > 0) showOutstanding = true
+                            else Toast.makeText(context, "No outstanding balances", Toast.LENGTH_SHORT).show()
+                        },
                     )
                 }
             }
@@ -315,11 +297,15 @@ private fun ReportsScreen(database: SalonDatabase) {
                         modifier = Modifier.weight(1f),
                     )
                     KpiCard(
-                        title = "Stock purchases",
-                        value = money.format(stockPurchases / 100.0),
-                        note = "Product costs",
-                        valueColor = Muted,
+                        title = "Commission",
+                        value = money.format(commission / 100.0),
+                        note = "Stylist payouts",
+                        valueColor = Accent,
                         modifier = Modifier.weight(1f),
+                        onClick = {
+                            if (commission > 0) showCommission = true
+                            else Toast.makeText(context, "No commissions this month", Toast.LENGTH_SHORT).show()
+                        },
                     )
                 }
             }
@@ -366,13 +352,7 @@ private fun ReportsScreen(database: SalonDatabase) {
                 }
             }
 
-            // Stylist performance
-            if (stylistRev.isNotEmpty()) {
-                item {
-                    MiniReportCard(title = "Revenue per stylist", rows = stylistRev)
-                }
-            }
-
+            // Commission per stylist
             if (stylistComm.isNotEmpty()) {
                 item {
                     MiniReportCard(title = "Commission per stylist", rows = stylistComm)
@@ -449,18 +429,7 @@ private fun ReportsScreen(database: SalonDatabase) {
                 }
             }
 
-            // Overdue aging summary
-            item {
-                MiniReportCard(
-                    title = "Overdue payments aging",
-                    rows = mapOf(
-                        "0-6 days" to "$d0to6 items (${money.format(a0to6 / 100.0)})",
-                        "7-13 days" to "$d7to13 items (${money.format(a7to13 / 100.0)})",
-                        "14-29 days" to "$d14to29 items (${money.format(a14to29 / 100.0)})",
-                        "30+ days" to "$d30plus items (${money.format(a30plus / 100.0)})",
-                    ),
-                )
-            }
+
         }
     }
 }
@@ -472,9 +441,10 @@ private fun KpiCard(
     note: String,
     valueColor: Color,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
     Card(
-        modifier = modifier,
+        modifier = (if (onClick != null) modifier.clickable(onClick = onClick) else modifier),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
@@ -517,6 +487,173 @@ private fun MiniReportCard(title: String, rows: Map<String, String>) {
             Text(title, color = Ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
             rows.forEach { (label, value) ->
                 ReportLine(label, value)
+            }
+        }
+    }
+}
+
+@Composable
+private fun OutstandingScreen(database: SalonDatabase, money: NumberFormat, onBack: () -> Unit) {
+    val clients = remember { database.clients() }
+    val clientIds = remember(clients) { clients.map { it.id } }
+    val allBookings = remember(clientIds) { database.bookingsForClientIds(clientIds) }
+    val allSales = remember(clientIds) { database.salesForClientIds(clientIds) }
+
+    Surface(color = Color.White, modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("\u2190", color = Brand, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
+                Text("Outstanding Balances", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            }
+            val outstandingClients = clients.filter { client ->
+                val bookings = allBookings[client.id] ?: emptyList()
+                val sales = allSales[client.id] ?: emptyList()
+                SalonUtils.outstandingBalance(bookings, sales) > 0
+            }
+            if (outstandingClients.isEmpty()) {
+                Text("No outstanding balances.", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(outstandingClients, key = { it.id }) { client ->
+                        val bookings = allBookings[client.id] ?: emptyList()
+                        val sales = allSales[client.id] ?: emptyList()
+                        val bal = SalonUtils.outstandingBalance(bookings, sales)
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(client.name, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                Text(if (client.phone.isEmpty()) "" else client.phone, color = Muted, fontSize = 12.sp)
+                            }
+                            Text(money.format(bal / 100.0), color = if (bal > 0) Danger else Brand, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SalesDetailScreen(database: SalonDatabase, reportMonth: Calendar, money: NumberFormat, onBack: () -> Unit) {
+    val monthStart = SalonUtils.monthStart(reportMonth)
+    val monthEnd = SalonUtils.monthEnd(reportMonth)
+    val sales = remember(monthStart, monthEnd) { database.salesBetween(monthStart, monthEnd) }
+
+    Surface(color = Color.White, modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("\u2190", color = Brand, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
+                Text("Product Sales", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            }
+            if (sales.isEmpty()) {
+                Text("No sales this month.", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
+            } else {
+                Text("${sales.size} sale(s) this month", color = Muted, fontSize = 13.sp)
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(sales, key = { it.id }) { sale ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(sale.description, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                Text("${sale.date} \u2022 ${sale.payment}", color = Muted, fontSize = 12.sp)
+                            }
+                            Text(money.format(sale.amount / 100.0), color = Brand, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExpensesDetailScreen(database: SalonDatabase, reportMonth: Calendar, money: NumberFormat, onBack: () -> Unit) {
+    val monthStart = SalonUtils.monthStart(reportMonth)
+    val monthEnd = SalonUtils.monthEnd(reportMonth)
+    val expenses = remember(monthStart, monthEnd) { database.expensesBetween(monthStart, monthEnd) }
+
+    Surface(color = Color.White, modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("\u2190", color = Brand, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
+                Text("Expenses", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            }
+            if (expenses.isEmpty()) {
+                Text("No expenses this month.", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
+            } else {
+                Text("${expenses.size} expense(s) this month", color = Muted, fontSize = 13.sp)
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(expenses, key = { it.id }) { expense ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(expense.category, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                Text(if (expense.note.isBlank()) expense.date else "${expense.date} \u2022 ${expense.note}", color = Muted, fontSize = 12.sp)
+                            }
+                            Text(money.format(expense.amount / 100.0), color = Danger, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CommissionDetailScreen(database: SalonDatabase, reportMonth: Calendar, money: NumberFormat, onBack: () -> Unit) {
+    val monthStart = SalonUtils.monthStart(reportMonth)
+    val monthEnd = SalonUtils.monthEnd(reportMonth)
+    val bookings = remember(monthStart, monthEnd) { database.bookingsBetween(monthStart, monthEnd) }
+    val stylists = remember { database.stylists() }
+
+    val stylistCommMap = remember(bookings) {
+        val map = mutableMapOf<String, Double>()
+        for (s in stylists) map[s.name] = 0.0
+        for (b in bookings) {
+            if (b.status == "completed") map[b.stylistName] = (map[b.stylistName] ?: 0.0) + b.serviceCommission
+        }
+        map.filter { it.value > 0 }.entries.sortedByDescending { it.value }
+    }
+
+    Surface(color = Color.White, modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("\u2190", color = Brand, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
+                Text("Commission", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            }
+            if (stylistCommMap.isEmpty()) {
+                Text("No commissions this month.", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
+            } else {
+                Text("${stylistCommMap.size} stylist(s) with commissions", color = Muted, fontSize = 13.sp)
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(stylistCommMap, key = { it.key }) { (name, total) ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(name, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                            Text(money.format(total / 100.0), color = Accent, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
             }
         }
     }

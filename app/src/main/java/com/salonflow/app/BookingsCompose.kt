@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -72,12 +74,17 @@ private fun BookingsScreen(
     val monthEnd = SalonUtils.monthEnd(visibleMonth)
     val monthBookings = database.bookingsBetween(monthStart, monthEnd)
     val pendingDates = monthBookings.filter { it.status == "pending" }.map { it.date }.toSet()
+    val today = SalonDatabase.today()
+    val isPastDate = selectedDate < today
+    val scrollState = rememberScrollState()
     val selectedBookings = database.bookingsForDate(selectedDate)
+    val selectedSales = if (isPastDate) database.salesBetween(selectedDate, selectedDate) else emptyList()
 
     Surface(color = Color.White, modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(scrollState)
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -90,7 +97,8 @@ private fun BookingsScreen(
                 onNextMonth = { visibleMonth = (visibleMonth.clone() as Calendar).apply { add(Calendar.MONTH, 1) } },
                 onDateSelected = { date ->
                     selectedDate = date
-                    if (database.bookingsForDate(date).isEmpty()) onEmptyDateSelected(date)
+                    val hasSales = date < today && database.salesBetween(date, date).isNotEmpty()
+                    if (database.bookingsForDate(date).isEmpty() && !hasSales) onEmptyDateSelected(date)
                 },
             )
             Text("Bookings on $selectedDate", color = Ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
@@ -102,6 +110,15 @@ private fun BookingsScreen(
                         booking = booking,
                         amount = money.format(booking.amount / 100.0),
                         onClick = { onBookingSelected(booking) },
+                    )
+                }
+            }
+            if (isPastDate && selectedSales.isNotEmpty()) {
+                Text("Sales on $selectedDate", color = Accent, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                selectedSales.forEach { sale ->
+                    SaleCard(
+                        sale = sale,
+                        amount = money.format(sale.amount / 100.0),
                     )
                 }
             }
@@ -244,6 +261,31 @@ private fun BookingCard(booking: SalonDatabase.Booking, amount: String, onClick:
             Column(horizontalAlignment = Alignment.End) {
                 Text(amount, color = Ink, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 StatusPill(booking.status)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SaleCard(sale: SalonDatabase.Sale, amount: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Warm),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Sale: ${sale.description}", color = Ink, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text("${sale.payment}", color = Muted, fontSize = 12.sp)
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(amount, color = Accent, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text("sale", color = Accent, fontSize = 11.sp)
             }
         }
     }

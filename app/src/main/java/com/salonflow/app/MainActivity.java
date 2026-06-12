@@ -853,7 +853,26 @@ public class MainActivity extends ComponentActivity {
                         Toast.makeText(this, "Enter a valid Kenyan phone number (e.g. 0712345678)", Toast.LENGTH_LONG).show();
                         return;
                     }
-                    if (client == null && db.saveClient(new SalonDatabase.Client(0, valueOr(name.getText().toString(), "Customer"), phoneVal)) > 0) {
+                    if (client == null) {
+                        String newName = valueOr(name.getText().toString(), "Customer");
+                        if (!phoneVal.isEmpty()) {
+                            SalonDatabase.Client existing = clientByPhone(phoneVal);
+                            if (existing != null) {
+                                if (!existing.name.equals(newName)) {
+                                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                                    builder.setTitle("Phone number exists")
+                                            .setMessage("This number is saved under \"" + existing.name + "\". Update name to \"" + newName + "\"?")
+                                            .setPositiveButton("Update name", (c, w2) -> {
+                                                db.saveClient(new SalonDatabase.Client(existing.id, newName, phoneVal));
+                                                rerender();
+                                            })
+                                            .setNegativeButton("Cancel", null)
+                                            .show();
+                                    return;
+                                }
+                            }
+                        }
+                        db.saveClient(new SalonDatabase.Client(0, newName, phoneVal));
                         rerender();
                     } else if (client != null) {
                         db.saveClient(new SalonDatabase.Client(client.id, valueOr(name.getText().toString(), "Customer"), phoneVal));
@@ -950,6 +969,19 @@ public class MainActivity extends ComponentActivity {
         Spinner payment = spinner(new String[]{"Cash", "Mobile money"});
         form.addView(payment);
         if (sale != null) payment.setSelection(indexOf(new String[]{"Cash", "Mobile money"}, sale.payment));
+        EditText paidInput = null;
+        EditText dueInput = null;
+        if (sale == null) {
+            form.addView(label("Paid now"));
+            paidInput = numberInput("0");
+            form.addView(paidInput);
+            form.addView(label("Due date"));
+            dueInput = input("", SalonDatabase.today());
+            setupDatePicker(dueInput);
+            form.addView(dueInput);
+        }
+        final EditText fPaid = paidInput;
+        final EditText fDue = dueInput;
         addItemRow.run();
         android.widget.ScrollView scroll = new android.widget.ScrollView(MainActivity.this);
         scroll.addView(form);
@@ -983,7 +1015,9 @@ public class MainActivity extends ComponentActivity {
                         Toast.makeText(MainActivity.this, "Add at least one product with quantity > 0", Toast.LENGTH_LONG).show();
                         return;
                     }
-                    long saleId = db.saveSale(new SalonDatabase.Sale(sale == null ? 0 : sale.id, valueOr(date.getText().toString(), SalonDatabase.today()), descParts.toString(), totalAmount, payment.getSelectedItem().toString(), null, "", client.id, totalAmount, "", null, 0));
+                    double paidAmount = sale == null ? Math.min(totalAmount, parseCents(fPaid.getText().toString(), 0)) : totalAmount;
+                    String dueDate = sale == null ? valueOr(fDue.getText().toString(), "") : "";
+                    long saleId = db.saveSale(new SalonDatabase.Sale(sale == null ? 0 : sale.id, valueOr(date.getText().toString(), SalonDatabase.today()), descParts.toString(), totalAmount, payment.getSelectedItem().toString(), null, "", client.id, paidAmount, dueDate, null, 0));
                     for (int i = 0; i < itemIds.size(); i++) {
                         db.deductFromBatches(itemIds.get(i), itemQtys.get(i), saleId);
                     }
@@ -1894,6 +1928,11 @@ public class MainActivity extends ComponentActivity {
         } catch (ParseException e) {
             return 0;
         }
+    }
+    private SalonDatabase.Client clientByPhone(String phone) {
+        if (phone == null || phone.isEmpty()) return null;
+        for (SalonDatabase.Client c : db.clients()) if (phone.equals(c.phone)) return c;
+        return null;
     }
     private SalonDatabase.Client clientById(Long id) {
         if (id == null) return null;

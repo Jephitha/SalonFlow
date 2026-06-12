@@ -20,9 +20,10 @@ public class DriveRetryReceiver extends BroadcastReceiver {
         SalonDatabase db = new SalonDatabase(context);
         File latest = db.latestBackup();
         if (latest == null) {
+            String msg = "No local backup found to upload. Tap Backup data manually.";
             NotificationRepository.getInstance(context)
-                    .add("backup_failure", "Drive Backup Failed",
-                            "No local backup found to upload. Tap Backup data manually.");
+                    .add("backup_failure", "Drive Backup Failed", msg);
+            ReminderReceiver.postNotification(context, 3301, "Drive Backup Failed", msg);
             return;
         }
 
@@ -41,10 +42,10 @@ public class DriveRetryReceiver extends BroadcastReceiver {
                         if (attempt < MAX_RETRIES) {
                             DriveBackupManager.scheduleRetry(context, attempt + 1);
                         } else {
+                            String msg = "Unable to upload after " + MAX_RETRIES + " attempts. Please tap Backup data and try again.";
                             NotificationRepository.getInstance(context)
-                                    .add("backup_failure", "Drive Backup Failed",
-                                            "Unable to upload after " + MAX_RETRIES + " attempts. " +
-                                                    "Please tap Backup data and try again.");
+                                    .add("backup_failure", "Drive Backup Failed", msg);
+                            ReminderReceiver.postNotification(context, 3302, "Drive Backup Failed", msg);
                         }
                     }
                 });
