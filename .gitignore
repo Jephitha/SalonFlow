@@ -21,8 +21,15 @@ app/salonflow-release.keystore
 apk-download-qr.png
 icon.png
 
+# Firebase config (device-specific, contains API keys)
+google-services.json
+reader/google-services.json
+
 # Internal docs
 HANDOVER.md
+
+# Extracted SVGs
+*.svg
 
 # Empty remnant directories
 project/

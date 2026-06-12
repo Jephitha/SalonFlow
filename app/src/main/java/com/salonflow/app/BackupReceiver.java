@@ -29,6 +29,8 @@ public class BackupReceiver extends BroadcastReceiver {
             return;
         }
 
+        SweeperSync.sweep(context);
+
         AppSettings settings = new AppSettings(context);
         if (!settings.hasDriveKey()) return;
 

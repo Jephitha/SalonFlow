@@ -15,3 +15,8 @@
 # Keep AccountManager usage
 -keep class android.accounts.AccountManager { *; }
 -keep class android.accounts.AccountManagerFuture { *; }
+
+# Keep Firebase
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+-keep class com.google.android.gms.tasks.** { *; }
