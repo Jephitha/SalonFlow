@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,7 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,11 +70,7 @@ private fun NotificationBell() {
     var showDialog by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier
-            .size(48.dp)
-            .clickable {
-                showDialog = true
-            },
+        modifier = Modifier.size(48.dp).clickable { showDialog = true },
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -86,18 +81,12 @@ private fun NotificationBell() {
         )
         if (unreadCount > 0) {
             Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .size(20.dp)
-                    .clip(CircleShape)
-                    .background(Danger),
+                modifier = Modifier.align(Alignment.TopEnd).size(20.dp).clip(CircleShape).background(Color(0xFFA13F32)),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     if (unreadCount > 99) "99+" else unreadCount.toString(),
-                    color = Color.White,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
+                    color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold,
                 )
             }
         }
@@ -120,64 +109,42 @@ private fun NotificationDialog(
     onDismiss: () -> Unit,
 ) {
     var notifications by remember { mutableStateOf(repo.findAll()) }
-    var showArchived by remember { mutableStateOf(false) }
-
-    val unread = notifications.filter { !it.read }
-    val displayList = if (showArchived) notifications else unread
-    val hasMore = unread.size > 10
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surface,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = 500.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp),
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     "Notifications",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Ink,
+                    fontSize = 20.sp, fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(Modifier.size(12.dp))
 
                 if (notifications.isEmpty()) {
                     Text(
                         "You have read it all...",
-                        color = Muted,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 14.sp,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 24.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
                         textAlign = TextAlign.Center,
                     )
                 } else {
-                    val items = if (showArchived || !hasMore) displayList
-                                else displayList.take(10)
-
                     LazyColumn(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        items(items, key = { it.id }) { notification ->
-                            SwipeableNotificationItem(
+                        items(notifications, key = { it.id }) { notification ->
+                            NotificationCard(
                                 notification = notification,
                                 onMarkRead = {
                                     repo.markAsRead(notification.id)
                                     notifications = repo.findAll()
                                 },
                             )
-                        }
-                    }
-
-                    if (!showArchived && hasMore) {
-                        TextButton(
-                            onClick = { showArchived = true },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text("See previous notifications", color = Brand)
                         }
                     }
                 }
@@ -187,7 +154,7 @@ private fun NotificationDialog(
 }
 
 @Composable
-private fun SwipeableNotificationItem(
+private fun NotificationCard(
     notification: NotificationEntry,
     onMarkRead: () -> Unit,
 ) {
@@ -195,14 +162,17 @@ private fun SwipeableNotificationItem(
     val threshold = 150f
 
     val indicatorColor = when (notification.type) {
-        "backup_success" -> Green
-        "backup_failure" -> Danger
-        "overdue" -> Orange
-        "morning_bookings" -> Brand
-        else -> Muted
+        "backup_success" -> Color(0xFF4CAF50)
+        "backup_failure" -> Color(0xFFA13F32)
+        "overdue" -> Color(0xFFFF9800)
+        "morning_bookings" -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
-    val bgAlpha = if (notification.read) 0.6f else 1f
+    val cardBg = if (notification.read)
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    else
+        MaterialTheme.colorScheme.surfaceVariant
 
     Box(
         modifier = Modifier
@@ -211,9 +181,7 @@ private fun SwipeableNotificationItem(
             .pointerInput(Unit) {
                 detectDragGestures(
                     onDragEnd = {
-                        if (abs(offsetX) > threshold) {
-                            onMarkRead()
-                        }
+                        if (abs(offsetX) > threshold) onMarkRead()
                         offsetX = 0f
                     },
                     onDrag = { change, dragAmount ->
@@ -222,18 +190,13 @@ private fun SwipeableNotificationItem(
                     },
                 )
             }
-            .background(
-                if (notification.read) Cell else Color.White,
-                RoundedCornerShape(8.dp),
-            )
+            .background(cardBg, RoundedCornerShape(8.dp))
             .padding(12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(indicatorColor.copy(alpha = bgAlpha)),
+                modifier = Modifier.size(10.dp).clip(CircleShape)
+                    .background(indicatorColor.copy(alpha = if (notification.read) 0.5f else 1f)),
             )
             Spacer(Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -241,18 +204,18 @@ private fun SwipeableNotificationItem(
                     notification.title,
                     fontSize = 14.sp,
                     fontWeight = if (notification.read) FontWeight.Normal else FontWeight.Bold,
-                    color = Ink.copy(alpha = bgAlpha),
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     notification.message,
                     fontSize = 12.sp,
-                    color = Muted.copy(alpha = bgAlpha),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Text(
                 formatTimestamp(notification.timestamp),
                 fontSize = 10.sp,
-                color = Muted.copy(alpha = bgAlpha),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

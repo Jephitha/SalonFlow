@@ -493,12 +493,12 @@ private fun BackupScreen(
                         Toast.makeText(activity, "Set a PIN in Security settings first", Toast.LENGTH_SHORT).show()
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Brand),
+                colors = ButtonDefaults.buttonColors(containerColor = Brand, contentColor = Color.White),
                 modifier = Modifier.weight(1f),
             ) { Text("Backup data") }
             Button(
                 onClick = { activity.restoreBackup() },
-                colors = ButtonDefaults.buttonColors(containerColor = Accent),
+                colors = ButtonDefaults.buttonColors(containerColor = Accent, contentColor = Color.White),
                 modifier = Modifier.weight(1f),
             ) { Text("Restore data") }
         }
@@ -518,7 +518,7 @@ private fun BackupScreen(
                     driveSignedIn = false
                     driveEmail = null
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Danger),
+                colors = ButtonDefaults.buttonColors(containerColor = Danger, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Sign out") }
         } else {
@@ -530,7 +530,7 @@ private fun BackupScreen(
                         driveEmail = driveManager.getSignedInEmail()
                     })
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Brand),
+                colors = ButtonDefaults.buttonColors(containerColor = Brand, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Sign in to Google Drive") }
         }

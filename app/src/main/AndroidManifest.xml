@@ -7,8 +7,12 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
+        android:name=".SweeperApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="SalonFlow"
@@ -33,5 +37,20 @@
         <receiver
             android:name=".DriveRetryReceiver"
             android:exported="false" />
+        <receiver
+            android:name=".SweeperAlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.salonflow.app.action.SWEEP_NORMAL" />
+                <action android:name="com.salonflow.app.action.SWEEP_SATURDAY" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".SweeperBootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

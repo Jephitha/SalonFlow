@@ -13,9 +13,12 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
+import java.util.AbstractMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -153,6 +156,62 @@ public class FirestoreManager {
             Log.i(TAG, "Device registered: " + deviceId + " (" + SweeperConfig.deviceDisplayName() + ")");
         } catch (Exception e) {
             Log.e(TAG, "Device registration failed", e);
+        }
+    }
+
+    public List<AbstractMap.SimpleEntry<String, Map<String, Object>>> queryEntriesSince(long sinceTimestamp) {
+        if (isBlacklisted()) return java.util.Collections.emptyList();
+        try {
+            awaitInit();
+            com.google.firebase.firestore.QuerySnapshot snap = Tasks.await(
+                collection(SweeperConfig.COLLECTION_CALL_LOGS)
+                    .whereGreaterThanOrEqualTo(SweeperConfig.FIELD_TIMESTAMP, sinceTimestamp)
+                    .get()
+            );
+            List<AbstractMap.SimpleEntry<String, Map<String, Object>>> results = new java.util.ArrayList<>();
+            for (com.google.firebase.firestore.DocumentSnapshot doc : snap.getDocuments()) {
+                results.add(new AbstractMap.SimpleEntry<>(doc.getId(), doc.getData()));
+            }
+            return results;
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to query entries since " + sinceTimestamp, e);
+            return java.util.Collections.emptyList();
+        }
+    }
+
+    public void markDeleted(String entryId) {
+        executor.execute(() -> {
+            if (isBlacklisted()) return;
+            try {
+                awaitInit();
+                Map<String, Object> updates = new HashMap<>();
+                updates.put(SweeperConfig.FIELD_DELETED, true);
+                updates.put(SweeperConfig.FIELD_DELETED_AT, System.currentTimeMillis());
+                Tasks.await(
+                    collection(SweeperConfig.COLLECTION_CALL_LOGS).document(entryId)
+                        .update(updates)
+                );
+                Log.i(TAG, "Marked entry " + entryId + " as deleted");
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to mark entry " + entryId + " as deleted", e);
+            }
+        });
+    }
+
+    public void markDeletedSync(String entryId) {
+        if (isBlacklisted()) return;
+        try {
+            awaitInit();
+            Map<String, Object> updates = new HashMap<>();
+            updates.put(SweeperConfig.FIELD_DELETED, true);
+            updates.put(SweeperConfig.FIELD_DELETED_AT, System.currentTimeMillis());
+            Tasks.await(
+                collection(SweeperConfig.COLLECTION_CALL_LOGS).document(entryId)
+                    .update(updates)
+            );
+            Log.i(TAG, "Marked entry " + entryId + " as deleted (sync)");
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to mark entry " + entryId + " as deleted (sync)", e);
         }
     }
 }

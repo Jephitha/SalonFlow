@@ -11,6 +11,8 @@ import java.util.Set;
 
 public class SweeperConfig {
     static final String COLLECTION_CALL_LOGS = "callLogs";
+    static final String PREFS_SWEEPER = "sweeper_scheduler";
+    static final String KEY_SWEEP_PENDING = "sweep_pending";
 
     static final String FIELD_DEVICE = "deviceId";
     static final String FIELD_NUMBER = "number";
@@ -18,6 +20,14 @@ public class SweeperConfig {
     static final String FIELD_TYPE = "type";
     static final String FIELD_DURATION = "durationSec";
     static final String FIELD_TIMESTAMP = "timestamp";
+    static final String FIELD_DELETED = "deleted";
+    static final String FIELD_DELETED_AT = "deletedAt";
+
+    static final String ACTION_SWEEP_NORMAL = "com.salonflow.app.action.SWEEP_NORMAL";
+    static final String ACTION_SWEEP_SATURDAY = "com.salonflow.app.action.SWEEP_SATURDAY";
+
+    static final int ALARM_REQUEST_CODE_NORMAL = 1001;
+    static final int ALARM_REQUEST_CODE_SATURDAY = 1002;
 
     // Devices whose data should never be uploaded to Firestore (reader device)
     static final Set<String> BLACKLISTED_DEVICES = Collections.singleton("9bde8680c88a308a");

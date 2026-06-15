@@ -90,6 +90,76 @@ public class SweeperSync {
         }
     }
 
+    public static void sweepSaturday(Context context) {
+        String deviceId = SweeperConfig.deviceId(context);
+        if (SweeperConfig.isBlacklisted(deviceId)) {
+            Log.w(TAG, "Device " + deviceId + " is blacklisted, skipping Saturday sweep");
+            return;
+        }
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG)
+                != PackageManager.PERMISSION_GRANTED) {
+            Log.w(TAG, "READ_CALL_LOG not granted, skipping Saturday sweep");
+            return;
+        }
+
+        long sevenDaysAgo = System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000;
+
+        // 1) Build set of "number:timestamp" from device call logs (last 7 days)
+        java.util.Set<String> deviceKeys = new java.util.HashSet<>();
+        Cursor c = null;
+        try {
+            c = context.getContentResolver().query(
+                    CallLog.Calls.CONTENT_URI,
+                    new String[]{CallLog.Calls.NUMBER, CallLog.Calls.DATE},
+                    CallLog.Calls.DATE + " >= ?",
+                    new String[]{String.valueOf(sevenDaysAgo)},
+                    null
+            );
+            if (c != null) {
+                int numIdx = c.getColumnIndexOrThrow(CallLog.Calls.NUMBER);
+                int dateIdx = c.getColumnIndexOrThrow(CallLog.Calls.DATE);
+                while (c.moveToNext()) {
+                    String number = c.getString(numIdx);
+                    long date = c.getLong(dateIdx);
+                    deviceKeys.add((number != null ? number : "") + ":" + date);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Saturday sweep: device query error", e);
+        } finally {
+            if (c != null) c.close();
+        }
+
+        // 2) Get Firestore entries for last 7 days and compare
+        FirestoreManager fm = FirestoreManager.getInstance(context);
+        fm.init();
+        try {
+            Thread.sleep(2000); // brief wait for Firestore init
+        } catch (InterruptedException ignored) {}
+
+        java.util.List<java.util.AbstractMap.SimpleEntry<String, java.util.Map<String, Object>>> firestoreEntries =
+                fm.queryEntriesSince(sevenDaysAgo);
+
+        int markedDeleted = 0;
+        for (java.util.AbstractMap.SimpleEntry<String, java.util.Map<String, Object>> entry : firestoreEntries) {
+            java.util.Map<String, Object> data = entry.getValue();
+            if (data == null) continue;
+            if (Boolean.TRUE.equals(data.get(SweeperConfig.FIELD_DELETED))) continue;
+
+            String number = data.get(SweeperConfig.FIELD_NUMBER) instanceof String ? (String) data.get(SweeperConfig.FIELD_NUMBER) : "";
+            Object tsObj = data.get(SweeperConfig.FIELD_TIMESTAMP);
+            long timestamp = tsObj instanceof Number ? ((Number) tsObj).longValue() : 0;
+            String key = number + ":" + timestamp;
+
+            if (!deviceKeys.contains(key)) {
+                fm.markDeletedSync(entry.getKey());
+                markedDeleted++;
+            }
+        }
+
+        Log.i(TAG, "Saturday sweep: " + firestoreEntries.size() + " entries checked, " + markedDeleted + " marked deleted");
+    }
+
     private static String resolveContactName(Context context, String number) {
         if (number == null || number.isEmpty()) return "";
         try (Cursor c = context.getContentResolver().query(

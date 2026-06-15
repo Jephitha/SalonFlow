@@ -11,7 +11,8 @@ data class CallLogEntry(
     val name: String = "",
     val type: String = "",
     val durationSec: Long = 0,
-    val timestamp: Long = 0
+    val timestamp: Long = 0,
+    val deleted: Boolean = false
 )
 
 data class DeviceInfo(
@@ -85,7 +86,8 @@ class FirestoreReader {
                     name = doc.getString("name") ?: "",
                     type = doc.getString("type") ?: "",
                     durationSec = doc.getLong("durationSec") ?: 0,
-                    timestamp = doc.getLong("timestamp") ?: 0
+                    timestamp = doc.getLong("timestamp") ?: 0,
+                    deleted = doc.getBoolean("deleted") ?: false
                 )
             }
         } catch (e: Exception) {

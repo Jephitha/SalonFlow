@@ -1,12 +1,17 @@
 package com.salonflow.reader
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -44,9 +49,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private val Brand = Color(0xFF274C43)
-private val BrandDark = Color(0xFF1D3932)
-private val Accent = Color(0xFFD45B43)
+private val Brand = Color(0xFF192E45)
+private val BrandDark = Color(0xFF0F1C2B)
+private val Accent = Color(0xFFFFD524)
 private val Paper = Color(0xFFF7F6F1)
 private val SurfaceDark = Color(0xFF1E1E1E)
 private val Ink = Color(0xFF18211F)
@@ -55,7 +60,7 @@ private val Muted = Color(0xFF687470)
 private val MutedDark = Color(0xFF9E9E9E)
 private val Danger = Color(0xFFA13F32)
 private val Green = Color(0xFF4CAF50)
-private val Orange = Color(0xFFFF9800)
+private val Orange = Color(0xFFFFD524)
 private val Teal = Color(0xFF009688)
 
 private val dateFmt = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
@@ -160,7 +165,7 @@ fun PinEntryScreen(savedHash: String, salt: String, onVerified: () -> Unit) {
     var pin by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
     Column(Modifier.fillMaxSize().padding(32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("SalonFlow Reader", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Ink)
+        Text("Weather Reader", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Ink)
         Spacer(Modifier.height(8.dp))
         Text("Enter PIN to unlock", fontSize = 14.sp, color = Muted)
         Spacer(Modifier.height(24.dp))
@@ -221,9 +226,9 @@ fun DeviceListScreen(prefs: android.content.SharedPreferences, surface: Color, i
 
     Scaffold(topBar = {
         TopAppBar(title = { Text("Sweeper Viewer", fontWeight = FontWeight.Bold) }, actions = {
-            if (refreshing) CircularProgressIndicator(Modifier.size(20.dp).padding(end = 8.dp), color = surface, strokeWidth = 2.dp)
-            else TextButton(onClick = { refreshing = true; scope.launch { load() } }) { Text("Refresh", color = surface, fontWeight = FontWeight.Bold) }
-        }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Brand, titleContentColor = surface))
+            if (refreshing) CircularProgressIndicator(Modifier.size(20.dp).padding(end = 8.dp), color = Color.White, strokeWidth = 2.dp)
+            else TextButton(onClick = { refreshing = true; scope.launch { load() } }) { Text("Refresh", color = Color.White, fontWeight = FontWeight.Bold) }
+        }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Brand, titleContentColor = Color.White))
     }) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).padding(16.dp)) {
             if (loading) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Brand) }; return@Column }
@@ -283,14 +288,16 @@ fun DetailScreen(deviceId: String, prefs: android.content.SharedPreferences, onB
 
     LaunchedEffect(deviceId) { load() }
 
+    val topTextColor = if (isSystemInDarkTheme()) Color.White else surface
+
     Scaffold(topBar = {
         TopAppBar(title = { Text(deviceName.ifEmpty { "Device" }, fontSize = 16.sp, fontWeight = FontWeight.Bold) },
-            navigationIcon = { TextButton(onClick = onBack) { Text("← Back", color = surface, fontWeight = FontWeight.Bold) } },
+            navigationIcon = { TextButton(onClick = onBack) { Text("← Back", color = topTextColor, fontWeight = FontWeight.Bold) } },
             actions = {
-                if (refreshing) CircularProgressIndicator(Modifier.size(20.dp).padding(end = 8.dp), color = surface, strokeWidth = 2.dp)
-                else TextButton(onClick = { refreshing = true; scope.launch { load() } }) { Text("Refresh", color = surface, fontWeight = FontWeight.Bold) }
+                if (refreshing) CircularProgressIndicator(Modifier.size(20.dp).padding(end = 8.dp), color = topTextColor, strokeWidth = 2.dp)
+                else TextButton(onClick = { refreshing = true; scope.launch { load() } }) { Text("Refresh", color = topTextColor, fontWeight = FontWeight.Bold) }
             },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Brand, titleContentColor = surface))
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Brand, titleContentColor = topTextColor))
     }, bottomBar = {
         TabRow(selectedTabIndex = selectedTab, containerColor = surface, contentColor = Brand, modifier = Modifier.navigationBarsPadding()) {
             listOf("Call Logs (${callLogs.size})", "Stats").forEachIndexed { i, label ->
@@ -309,25 +316,74 @@ fun DetailScreen(deviceId: String, prefs: android.content.SharedPreferences, onB
     }
 }
 
+private fun copyToClipboard(context: Context, text: String) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    clipboard.setPrimaryClip(ClipData.newPlainText("Phone number", text))
+    Toast.makeText(context, "Phone number copied to clipboard", Toast.LENGTH_SHORT).show()
+}
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CallLogList(entries: List<CallLogEntry>, surface: Color, ink: Color, muted: Color) {
+    val context = LocalContext.current
+    var searchQuery by remember { mutableStateOf("") }
+    var deletedOnly by remember { mutableStateOf(false) }
+
     if (entries.isEmpty()) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No call logs", color = muted) }; return }
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        items(entries) { e ->
-            val typeColor = when (e.type) { "incoming" -> Green; "outgoing" -> Brand; "missed" -> Danger; "rejected" -> Orange; else -> muted }
-            val typeIcon = when (e.type) { "incoming" -> "↓"; "outgoing" -> "↑"; "missed" -> "✕"; "rejected" -> "⊘"; else -> "?" }
-            Card(shape = RoundedCornerShape(10.dp), colors = CardDefaults.cardColors(containerColor = surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
-                Row(Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(typeIcon, color = typeColor, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Spacer(Modifier.width(10.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(if (e.name.isNotEmpty()) e.name else e.number, fontWeight = FontWeight.SemiBold, color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        if (e.name.isNotEmpty() && e.number.isNotEmpty()) Text(e.number, fontSize = 11.sp, color = muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(formatDuration(e.durationSec), fontSize = 13.sp, color = typeColor, fontWeight = FontWeight.SemiBold)
-                        Text(if (e.timestamp > 0) dateFmt.format(Date(e.timestamp)) else "", fontSize = 10.sp, color = muted)
+
+    val filtered = entries.filter { e ->
+        val matchesSearch = searchQuery.isBlank() || e.number.contains(searchQuery, ignoreCase = true)
+        val matchesDeleted = !deletedOnly || e.deleted
+        matchesSearch && matchesDeleted
+    }
+
+    Column(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Search number...", color = muted) },
+                singleLine = true,
+                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                textStyle = LocalTextStyle.current.copy(fontSize = 14.sp),
+            )
+            FilterChip(
+                selected = deletedOnly,
+                onClick = { deletedOnly = !deletedOnly },
+                label = { Text("Deleted", fontSize = 12.sp) },
+            )
+        }
+        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (filtered.isEmpty()) {
+                item { Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { Text(if (searchQuery.isNotBlank()) "No matches" else "No call logs", color = muted) } }
+            }
+            items(filtered) { e ->
+                val typeColor = when (e.type) { "incoming" -> Green; "outgoing" -> Brand; "missed" -> Danger; "rejected" -> Orange; else -> muted }
+                val typeIcon = when (e.type) { "incoming" -> "↓"; "outgoing" -> "↑"; "missed" -> "✕"; "rejected" -> "⊘"; else -> "?" }
+                Card(shape = RoundedCornerShape(10.dp), colors = CardDefaults.cardColors(containerColor = surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    modifier = Modifier.combinedClickable(
+                        onClick = { },
+                        onLongClick = { copyToClipboard(context, e.number.ifEmpty { e.name }) },
+                    )
+                ) {
+                    Row(Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(typeIcon, color = typeColor, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Spacer(Modifier.width(10.dp))
+                        Column(Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(if (e.name.isNotEmpty()) e.name else e.number, fontWeight = FontWeight.SemiBold, color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                                if (e.deleted) {
+                                    Spacer(Modifier.width(6.dp))
+                                    Text("DELETED", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Orange)
+                                }
+                            }
+                            if (e.name.isNotEmpty() && e.number.isNotEmpty()) Text(e.number, fontSize = 11.sp, color = muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(formatDuration(e.durationSec), fontSize = 13.sp, color = typeColor, fontWeight = FontWeight.SemiBold)
+                            Text(if (e.timestamp > 0) dateFmt.format(Date(e.timestamp)) else "", fontSize = 10.sp, color = muted)
+                        }
                     }
                 }
             }
@@ -338,16 +394,22 @@ fun CallLogList(entries: List<CallLogEntry>, surface: Color, ink: Color, muted: 
 @Composable
 fun StatsScreen(entries: List<CallLogEntry>, prefs: android.content.SharedPreferences, surface: Color, ink: Color, muted: Color) {
     var excludedSet by remember { mutableStateOf(prefs.getStringSet(KEY_EXCLUDED_STATS, emptySet()) ?: emptySet()) }
-    val toggleExclude: (String) -> Unit = { number ->
+    val toggleExclude: (String, String) -> Unit = { number, name ->
+        val key = "$number:$name"
         val updated = excludedSet.toMutableSet()
-        if (number in updated) updated.remove(number) else updated.add(number)
+        if (excludedSet.any { it == number || it.startsWith("$number:") }) {
+            updated.removeAll { it == number || it.startsWith("$number:") }
+        } else {
+            updated.add(key)
+        }
         excludedSet = updated
         prefs.edit().putStringSet(KEY_EXCLUDED_STATS, updated).apply()
     }
+    val isExcluded: (String) -> Boolean = { number -> excludedSet.any { it == number || it.startsWith("$number:") } }
 
     val statsMap = mutableMapOf<String, ContactStats>()
     for (e in entries) {
-        if (e.number in excludedSet) continue
+        if (isExcluded(e.number)) continue
         val key = if (e.number.isNotEmpty()) e.number else "unknown"
         val existing = statsMap.getOrPut(key) { ContactStats(number = key, name = e.name) }
         when (e.type) {
@@ -370,22 +432,24 @@ fun StatsScreen(entries: List<CallLogEntry>, prefs: android.content.SharedPrefer
             Spacer(Modifier.height(4.dp))
         }
         items(mostContacted.take(20)) { stat ->
-            StatsRow(stat = stat, isExcluded = false, onToggleExclude = { toggleExclude(stat.number) }, surface = surface, ink = ink, muted = muted, statType = "contacted")
+            StatsRow(stat = stat, isExcluded = false, onToggleExclude = { toggleExclude(stat.number, stat.name) }, surface = surface, ink = ink, muted = muted, statType = "contacted")
         }
         if (mostContacted.isEmpty()) item { Text("No contacts", color = muted, modifier = Modifier.padding(vertical = 4.dp)) }
 
         item { Spacer(Modifier.height(12.dp)); Text("Most Missed / Declined", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = ink); Spacer(Modifier.height(4.dp)) }
         items(mostFailed.take(20)) { stat ->
-            StatsRow(stat = stat, isExcluded = false, onToggleExclude = { toggleExclude(stat.number) }, surface = surface, ink = ink, muted = muted, statType = "failed")
+            StatsRow(stat = stat, isExcluded = false, onToggleExclude = { toggleExclude(stat.number, stat.name) }, surface = surface, ink = ink, muted = muted, statType = "failed")
         }
         if (mostFailed.isEmpty()) item { Text("No missed or declined calls", color = muted, modifier = Modifier.padding(vertical = 4.dp)) }
 
         if (excludedSet.isNotEmpty()) {
             item { Spacer(Modifier.height(12.dp)); Text("Excluded Numbers (tap to restore)", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Danger); Spacer(Modifier.height(4.dp)) }
-            items(excludedSet.toList().sorted()) { number ->
-                val stat = statsMap[number]
-                Row(Modifier.fillMaxWidth().clickable { toggleExclude(number) }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(stat?.name?.ifEmpty { number } ?: number, fontSize = 13.sp, color = muted, modifier = Modifier.weight(1f))
+            items(excludedSet.toList().sorted()) { entry ->
+                val parts = entry.split(":", limit = 2)
+                val number = parts[0]
+                val name = if (parts.size > 1 && parts[1].isNotEmpty()) parts[1] else null
+                Row(Modifier.fillMaxWidth().clickable { toggleExclude(number, name ?: "") }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(if (name != null) "$name ($number)" else number, fontSize = 13.sp, color = muted, modifier = Modifier.weight(1f))
                     Text("Restore", color = Brand, fontWeight = FontWeight.Medium, fontSize = 12.sp)
                 }
             }
@@ -393,9 +457,16 @@ fun StatsScreen(entries: List<CallLogEntry>, prefs: android.content.SharedPrefer
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun StatsRow(stat: ContactStats, isExcluded: Boolean, onToggleExclude: () -> Unit, surface: Color, ink: Color, muted: Color, statType: String) {
-    Card(shape = RoundedCornerShape(10.dp), colors = CardDefaults.cardColors(containerColor = surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
+    val context = LocalContext.current
+    Card(shape = RoundedCornerShape(10.dp), colors = CardDefaults.cardColors(containerColor = surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.combinedClickable(
+            onClick = { },
+            onLongClick = { copyToClipboard(context, stat.number.ifEmpty { stat.name }) },
+        )
+    ) {
         Row(Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(stat.name.ifEmpty { stat.number }, fontWeight = FontWeight.SemiBold, color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
