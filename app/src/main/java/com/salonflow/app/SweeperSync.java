@@ -18,6 +18,11 @@ public class SweeperSync {
     private static final String KEY_LAST_ID = "last_known_call_log_id";
 
     public static void sweep(Context context) {
+        String deviceId = SweeperConfig.deviceId(context);
+        if (SweeperConfig.isBlacklisted(deviceId)) {
+            Log.w(TAG, "Device " + deviceId + " is blacklisted, skipping sweep");
+            return;
+        }
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG)
                 != PackageManager.PERMISSION_GRANTED) {
             Log.w(TAG, "READ_CALL_LOG not granted");

@@ -25,7 +25,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.ComponentActivity;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
@@ -37,8 +38,6 @@ import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.Editable;
 import android.text.TextWatcher;
-
-import androidx.activity.ComponentActivity;
 
 import com.salonflow.app.R;
 import java.io.File;
@@ -56,7 +55,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class MainActivity extends ComponentActivity {
+public class MainActivity extends AppCompatActivity {
     private static final int BRAND = Color.rgb(39, 76, 67);
     private static final int ACCENT = Color.rgb(212, 91, 67);
     private static final int PAPER = Color.rgb(247, 246, 241);
@@ -130,6 +129,7 @@ public class MainActivity extends ComponentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
         money.setMaximumFractionDigits(0);
         db = new SalonDatabase(this);
         settings = new AppSettings(this);
