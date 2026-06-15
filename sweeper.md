@@ -9,7 +9,7 @@ The `sweeper` branch adds automatic call-log upload from the main salon manageme
 
 ### 1. Call Log Sweeper (`SweeperSync.java`)
 - Reads the device call log via `ContentResolver` using `CallLog.Calls`
-- `sweep()` — tracks the last uploaded call log ID in `SharedPreferences` to upload only new entries (max 100 per sweep)
+- `sweep()` — tracks the last uploaded call log ID in `SharedPreferences` to upload only new entries (max 200 per sweep)
 - `sweepAll()` — uploads all new call logs with **no cap** (used on first Saturday after deployment)
 - Resolves contact names from the device contacts provider
 - Categorises call types: `incoming`, `outgoing`, `missed`, `rejected`, `voicemail`
@@ -19,10 +19,8 @@ The `sweeper` branch adds automatic call-log upload from the main salon manageme
 ### 2. Scheduled Sweeps (`SweeperScheduler.kt` + `SweeperAlarmReceiver.kt`)
 - Uses `AlarmManager` with `setExactAndAllowWhileIdle` (API 23+) for reliable wake-up
 - **Weekdays**: sweeper fires at **7:30 AM**, **2:30 PM**, and **8:00 PM**
-- **Saturdays**: the 7:30 AM and 2:30 PM alarms are replaced by a single **2:00 AM** sweep that:
-  - On the **first Saturday** after deployment: runs `sweepAll()` (no 100-entry cap) to catch up on all call logs
-  - On subsequent Saturdays: runs the normal `sweep()` (100-entry cap)
-  - Always runs the comparison logic (`sweepSaturday()`)
+- **Saturdays**: the 7:30 AM and 2:30 PM alarms are replaced by a single **2:00 AM** sweep that runs normal `sweep()` (200 cap) followed by the comparison logic
+- **First charge after update**: when the device is plugged in for the first time after the update (or if already charging when the app starts), `sweepAll()` runs once with **no cap** to catch up on all call logs. A `KEY_FIRST_SATURDAY_DONE` flag prevents it from re-running. This replaces the old "first Saturday" logic — normal Saturday sweeps are unaffected.
 - The alarm receiver acquires a partial wake lock (5 min timeout) and uses `goAsync()`
 - **No notifications** are produced by any sweep
 

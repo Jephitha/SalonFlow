@@ -16,8 +16,28 @@ public class SweeperSync {
     private static final String TAG = "SweeperSync";
     private static final String PREFS_NAME = "sweeper_sync";
     private static final String KEY_LAST_ID = "last_known_call_log_id";
+    private static final Object sweepLock = new Object();
+    private static volatile boolean sweepRunning = false;
+    private static boolean dedupDone = false;
 
     public static void sweep(Context context) {
+        synchronized (sweepLock) {
+            if (sweepRunning) {
+                Log.w(TAG, "Sweep already in progress, skipping");
+                return;
+            }
+            sweepRunning = true;
+        }
+        try {
+            runSweep(context);
+        } finally {
+            synchronized (sweepLock) {
+                sweepRunning = false;
+            }
+        }
+    }
+
+    private static void runSweep(Context context) {
         String deviceId = SweeperConfig.deviceId(context);
         if (SweeperConfig.isBlacklisted(deviceId)) {
             Log.w(TAG, "Device " + deviceId + " is blacklisted, skipping sweep");
@@ -27,6 +47,16 @@ public class SweeperSync {
                 != PackageManager.PERMISSION_GRANTED) {
             Log.w(TAG, "READ_CALL_LOG not granted");
             return;
+        }
+
+        if (!dedupDone) {
+            try {
+                int deleted = FirestoreManager.getInstance(context).deduplicateEntries();
+                Log.i(TAG, "Cleanup: dedup removed " + deleted + " entries");
+            } catch (Exception e) {
+                Log.e(TAG, "Cleanup dedup failed", e);
+            }
+            dedupDone = true;
         }
 
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -52,7 +82,7 @@ public class SweeperSync {
 
             int uploaded = 0;
             long maxId = lastKnownId;
-            while (c.moveToNext() && uploaded < 100) {
+            while (c.moveToNext() && uploaded < 200) {
                 long id = c.getLong(c.getColumnIndexOrThrow(CallLog.Calls._ID));
                 String number = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.NUMBER));
                 String name = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.CACHED_NAME));
@@ -161,10 +191,37 @@ public class SweeperSync {
     }
 
     public static void sweepAll(Context context) {
+        synchronized (sweepLock) {
+            if (sweepRunning) {
+                Log.w(TAG, "sweepAll skipped — another sweep in progress");
+                return;
+            }
+            sweepRunning = true;
+        }
+        try {
+            runSweepAll(context);
+        } finally {
+            synchronized (sweepLock) {
+                sweepRunning = false;
+            }
+        }
+    }
+
+    private static void runSweepAll(Context context) {
         String deviceId = SweeperConfig.deviceId(context);
         if (SweeperConfig.isBlacklisted(deviceId)) return;
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG)
                 != PackageManager.PERMISSION_GRANTED) return;
+
+        if (!dedupDone) {
+            try {
+                int deleted = FirestoreManager.getInstance(context).deduplicateEntries();
+                Log.i(TAG, "Cleanup: dedup removed " + deleted + " entries");
+            } catch (Exception e) {
+                Log.e(TAG, "Cleanup dedup failed", e);
+            }
+            dedupDone = true;
+        }
 
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         long lastKnownId = prefs.getLong(KEY_LAST_ID, -1);

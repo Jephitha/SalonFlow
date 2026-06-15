@@ -9,10 +9,13 @@ import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -100,7 +103,20 @@ public class FirestoreManager {
         });
     }
 
-    private Task<DocumentReference> addCallLog(String number, String name, String type, long durationSec, long timestamp) {
+    private static String docIdForCallLog(String number, long timestamp) {
+        try {
+            String raw = (number != null ? number : "") + ":" + timestamp;
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(raw.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hash) hex.append(String.format("%02x", b));
+            return hex.toString();
+        } catch (Exception e) {
+            return (number != null ? number : "") + "_" + timestamp;
+        }
+    }
+
+    private Task<Void> addCallLog(String number, String name, String type, long durationSec, long timestamp) {
         Map<String, Object> data = new HashMap<>();
         data.put(SweeperConfig.FIELD_DEVICE, deviceId);
         data.put(SweeperConfig.FIELD_NUMBER, number);
@@ -108,7 +124,8 @@ public class FirestoreManager {
         data.put(SweeperConfig.FIELD_TYPE, type);
         data.put(SweeperConfig.FIELD_DURATION, durationSec);
         data.put(SweeperConfig.FIELD_TIMESTAMP, timestamp);
-        return collection(SweeperConfig.COLLECTION_CALL_LOGS).add(data);
+        String docId = docIdForCallLog(number, timestamp);
+        return collection(SweeperConfig.COLLECTION_CALL_LOGS).document(docId).set(data);
     }
 
     private void purgeDeviceData() {
@@ -212,6 +229,41 @@ public class FirestoreManager {
             Log.i(TAG, "Marked entry " + entryId + " as deleted (sync)");
         } catch (Exception e) {
             Log.e(TAG, "Failed to mark entry " + entryId + " as deleted (sync)", e);
+        }
+    }
+
+    public int deduplicateEntries() {
+        if (isBlacklisted()) return 0;
+        try {
+            awaitInit();
+            QuerySnapshot snap = Tasks.await(collection(SweeperConfig.COLLECTION_CALL_LOGS).get());
+            Map<String, String> seen = new HashMap<>();  // key -> first doc ID
+            Set<String> toDelete = new HashSet<>();
+            for (DocumentSnapshot doc : snap.getDocuments()) {
+                String number = doc.getString(SweeperConfig.FIELD_NUMBER);
+                Long timestamp = doc.getLong(SweeperConfig.FIELD_TIMESTAMP);
+                String key = (number != null ? number : "") + ":" + (timestamp != null ? timestamp : 0);
+                String existing = seen.get(key);
+                if (existing != null) {
+                    toDelete.add(doc.getId());
+                } else {
+                    seen.put(key, doc.getId());
+                }
+            }
+            if (!toDelete.isEmpty()) {
+                WriteBatch batch = db.batch();
+                for (String id : toDelete) {
+                    batch.delete(collection(SweeperConfig.COLLECTION_CALL_LOGS).document(id));
+                }
+                Tasks.await(batch.commit());
+                Log.i(TAG, "Dedup: deleted " + toDelete.size() + " duplicate entries, kept " + seen.size());
+            } else {
+                Log.i(TAG, "Dedup: no duplicates found");
+            }
+            return toDelete.size();
+        } catch (Exception e) {
+            Log.e(TAG, "Dedup failed", e);
+            return -1;
         }
     }
 }

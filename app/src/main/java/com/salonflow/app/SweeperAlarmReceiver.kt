@@ -51,14 +51,7 @@ class SweeperAlarmReceiver : BroadcastReceiver() {
                             return@launch
                         }
                         clearPendingSweep(context)
-                        val prefs = context.getSharedPreferences(SweeperConfig.PREFS_SWEEPER, Context.MODE_PRIVATE)
-                        val firstSaturdayDone = prefs.getBoolean(SweeperConfig.KEY_FIRST_SATURDAY_DONE, false)
-                        if (!firstSaturdayDone) {
-                            SweeperSync.sweepAll(context)
-                            prefs.edit().putBoolean(SweeperConfig.KEY_FIRST_SATURDAY_DONE, true).apply()
-                        } else {
-                            SweeperSync.sweep(context)
-                        }
+                        SweeperSync.sweep(context)
                         SweeperSync.sweepSaturday(context)
                     } catch (e: Exception) {
                         Log.e(TAG, "Saturday sweep failed", e)

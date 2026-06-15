@@ -115,7 +115,8 @@ object SweeperScheduler {
                     GlobalScope.launch(Dispatchers.IO) {
                         try {
                             SweeperSync.sweep(context)
-                            prefs.edit().putBoolean(SweeperConfig.KEY_SWEEP_PENDING, false).apply()
+                            context.getSharedPreferences(SweeperConfig.PREFS_SWEEPER, Context.MODE_PRIVATE)
+                                .edit().putBoolean(SweeperConfig.KEY_SWEEP_PENDING, false).apply()
                         } catch (e: Exception) {
                             Log.e(TAG, "Recovery sweep failed", e)
                         }

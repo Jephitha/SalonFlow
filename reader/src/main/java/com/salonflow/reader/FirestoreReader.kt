@@ -89,7 +89,7 @@ class FirestoreReader {
                     timestamp = doc.getLong("timestamp") ?: 0,
                     deleted = doc.getBoolean("deleted") ?: false
                 )
-            }
+            }.distinctBy { it.number + ":" + it.timestamp }
         } catch (e: Exception) {
             Log.e("FirestoreReader", "Failed to load call logs: ${e.message}", e)
             return emptyList()
