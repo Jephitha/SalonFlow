@@ -1,7 +1,7 @@
 package com.salonflow.app;
 
 import android.app.AlarmManager;
-import android.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.app.PendingIntent;
 import android.Manifest;
 import android.content.Context;
@@ -56,11 +56,12 @@ import java.util.Locale;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
-    private static final int BRAND = Color.rgb(39, 76, 67);
-    private static final int ACCENT = Color.rgb(212, 91, 67);
-    private static final int PAPER = Color.rgb(247, 246, 241);
-    private static final int MUTED = Color.rgb(104, 116, 112);
-    private static final int DANGER = Color.rgb(161, 63, 50);
+    private int BRAND = Color.rgb(39, 76, 67);
+    private int ACCENT = Color.rgb(212, 91, 67);
+    private int PAPER = Color.rgb(247, 246, 241);
+    private int MUTED = Color.rgb(104, 116, 112);
+    private int DANGER = Color.rgb(161, 63, 50);
+    private int SURFACE = Color.WHITE;
 
     private static final String[] SETTINGS_SECTIONS = {"services", "inventory", "stylists", "security", "notifications", "backup"};
  
@@ -126,10 +127,25 @@ public class MainActivity extends AppCompatActivity {
     private final String[] tabs = {"Home", "Bookings", "Clients", "Reports", "Settings"};
     private final String[] tabIcons = {"⌂", "□", "◉", "▤", "⚙"};
 
+    private void applyNightColors() {
+        int nightModeFlags = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        boolean night = nightModeFlags == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        if (night) {
+            PAPER = Color.rgb(18, 18, 18);
+            SURFACE = Color.rgb(30, 30, 30);
+            MUTED = Color.rgb(158, 158, 158);
+        } else {
+            PAPER = Color.rgb(247, 246, 241);
+            SURFACE = Color.WHITE;
+            MUTED = Color.rgb(104, 116, 112);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        super.onCreate(savedInstanceState);
+        applyNightColors();
         money.setMaximumFractionDigits(0);
         db = new SalonDatabase(this);
         settings = new AppSettings(this);
@@ -214,7 +230,7 @@ public class MainActivity extends AppCompatActivity {
 
         content = vertical();
         content.setPadding(dp(12), dp(10), dp(12), dp(10));
-        content.setBackgroundColor(Color.WHITE);
+        content.setBackgroundColor(SURFACE);
         LinearLayout.LayoutParams contentParams = new LinearLayout.LayoutParams(-1, 0, 1);
         contentParams.setMargins(dp(10), 0, dp(10), 0);
         root.addView(content, contentParams);
@@ -222,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
         bottomNav = new LinearLayout(this);
         bottomNav.setOrientation(LinearLayout.HORIZONTAL);
         bottomNav.setPadding(dp(4), dp(4), dp(4), dp(16));
-        bottomNav.setBackgroundColor(Color.WHITE);
+        bottomNav.setBackgroundColor(SURFACE);
         LinearLayout.LayoutParams navParams = new LinearLayout.LayoutParams(-1, dp(82));
         navParams.setMargins(dp(8), dp(4), dp(8), dp(14));
         root.addView(bottomNav, navParams);
@@ -266,7 +282,7 @@ public class MainActivity extends AppCompatActivity {
             final int index = i;
             LinearLayout tab = vertical();
             tab.setGravity(Gravity.CENTER);
-            tab.setBackgroundColor(Color.WHITE);
+            tab.setBackgroundColor(SURFACE);
             TextView icon = text(tabIcons[i], 22, i == selectedTab ? ACCENT : MUTED, Typeface.BOLD);
             icon.setGravity(Gravity.CENTER);
             TextView label = text(tabs[i], 11, i == selectedTab ? ACCENT : MUTED, i == selectedTab ? Typeface.BOLD : Typeface.NORMAL);
