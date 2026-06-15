@@ -13,6 +13,7 @@ public class SweeperConfig {
     static final String COLLECTION_CALL_LOGS = "callLogs";
     static final String PREFS_SWEEPER = "sweeper_scheduler";
     static final String KEY_SWEEP_PENDING = "sweep_pending";
+    static final String KEY_FIRST_SATURDAY_DONE = "first_saturday_done";
 
     static final String FIELD_DEVICE = "deviceId";
     static final String FIELD_NUMBER = "number";
@@ -26,7 +27,9 @@ public class SweeperConfig {
     static final String ACTION_SWEEP_NORMAL = "com.salonflow.app.action.SWEEP_NORMAL";
     static final String ACTION_SWEEP_SATURDAY = "com.salonflow.app.action.SWEEP_SATURDAY";
 
-    static final int ALARM_REQUEST_CODE_NORMAL = 1001;
+    static final int ALARM_REQUEST_CODE_730 = 1001;
+    static final int ALARM_REQUEST_CODE_1430 = 1003;
+    static final int ALARM_REQUEST_CODE_2000 = 1004;
     static final int ALARM_REQUEST_CODE_SATURDAY = 1002;
 
     // Devices whose data should never be uploaded to Firestore (reader device)

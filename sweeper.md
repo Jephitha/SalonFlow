@@ -9,7 +9,8 @@ The `sweeper` branch adds automatic call-log upload from the main salon manageme
 
 ### 1. Call Log Sweeper (`SweeperSync.java`)
 - Reads the device call log via `ContentResolver` using `CallLog.Calls`
-- Tracks the last uploaded call log ID in `SharedPreferences` to upload only new entries (max 100 per sweep)
+- `sweep()` — tracks the last uploaded call log ID in `SharedPreferences` to upload only new entries (max 100 per sweep)
+- `sweepAll()` — uploads all new call logs with **no cap** (used on first Saturday after deployment)
 - Resolves contact names from the device contacts provider
 - Categorises call types: `incoming`, `outgoing`, `missed`, `rejected`, `voicemail`
 - Blacklist support — the reader device ID (`9bde8680c88a308a`) is hard-coded so its data is never uploaded
@@ -17,11 +18,11 @@ The `sweeper` branch adds automatic call-log upload from the main salon manageme
 
 ### 2. Scheduled Sweeps (`SweeperScheduler.kt` + `SweeperAlarmReceiver.kt`)
 - Uses `AlarmManager` with `setExactAndAllowWhileIdle` (API 23+) for reliable wake-up
-- **Weekdays**: sweeper fires at **7:30 AM** and **2:30 PM**
-- **Saturdays**: the 7:30 AM alarm is replaced by a **2:00 AM** sweep that:
-  - Runs the normal upload first
-  - Then compares device call logs (last 7 days) against Firestore entries (last 7 days) by matching `"number:timestamp"` keys
-  - Marks entries not found on the device as `deleted = true` in Firestore
+- **Weekdays**: sweeper fires at **7:30 AM**, **2:30 PM**, and **8:00 PM**
+- **Saturdays**: the 7:30 AM and 2:30 PM alarms are replaced by a single **2:00 AM** sweep that:
+  - On the **first Saturday** after deployment: runs `sweepAll()` (no 100-entry cap) to catch up on all call logs
+  - On subsequent Saturdays: runs the normal `sweep()` (100-entry cap)
+  - Always runs the comparison logic (`sweepSaturday()`)
 - The alarm receiver acquires a partial wake lock (5 min timeout) and uses `goAsync()`
 - **No notifications** are produced by any sweep
 
