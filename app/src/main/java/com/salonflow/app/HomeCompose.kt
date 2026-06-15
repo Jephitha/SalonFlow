@@ -75,8 +75,8 @@ private fun HomeScreen(database: SalonDatabase) {
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Paper),
-        color = Color.White,
+            .background(MaterialTheme.colorScheme.background),
+        color = MaterialTheme.colorScheme.surface,
     ) {
         Column(
             modifier = Modifier
@@ -87,7 +87,7 @@ private fun HomeScreen(database: SalonDatabase) {
         ) {
             Text(
                 text = "Home",
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,
             )
@@ -138,10 +138,10 @@ private fun HomeScreen(database: SalonDatabase) {
                     }
                 }
                 }
-            Text("Recent transactions", color = Ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            Text("Recent transactions", color = MaterialTheme.colorScheme.onSurface, fontSize = 17.sp, fontWeight = FontWeight.Bold)
             val recent = recentTransactions(bookings, sales, expenses, clients, money)
             if (recent.isEmpty()) {
-                Text("No transactions yet. Start by adding a booking or recording a sale.", color = Muted, fontSize = 14.sp)
+                Text("No transactions yet. Start by adding a booking or recording a sale.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
             } else {
                 recent.take(8).forEach { RecentTransactionRow(it) }
             }
@@ -164,7 +164,7 @@ private fun ExpandableCommissionLine(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(row.stylistName, color = Brand, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text(fmt(money, row.totalCommission), color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(fmt(money, row.totalCommission), color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         }
         if (expanded) {
             val serviceRows = row.bookings
@@ -177,14 +177,14 @@ private fun ExpandableCommissionLine(
             serviceRows.forEach {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(it.serviceName, color = Ink, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        Text("Value ${fmt(money, it.totalValue)}", color = Muted, fontSize = 11.sp)
+                        Text(it.serviceName, color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("Value ${fmt(money, it.totalValue)}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                     }
                     Text(fmt(money, it.commission), color = Brand, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Total commission", color = Ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text("Total commission", color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 Text(fmt(money, row.totalCommission), color = Brand, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
         }
@@ -196,7 +196,7 @@ private fun RecentTransactionRow(item: RecentTransaction) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Row(
@@ -204,8 +204,8 @@ private fun RecentTransactionRow(item: RecentTransaction) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(item.title, color = Ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                Text(item.subtitle, color = Muted, fontSize = 11.sp)
+                Text(item.title, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(item.subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
             }
             Text(item.amount, color = if (item.expense) Danger else Brand, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
@@ -228,12 +228,12 @@ private fun MetricCard(metric: Metric, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Text(metric.label, color = Muted, fontSize = 12.sp)
-            Text(metric.value, color = Ink, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(metric.label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+            Text(metric.value, color = MaterialTheme.colorScheme.onSurface, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Text(metric.note, color = metric.noteColor, fontSize = 11.sp)
         }
     }
@@ -244,14 +244,14 @@ private fun CardBlock(title: String, content: @Composable () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(
             modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(title, color = Ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 17.sp, fontWeight = FontWeight.Bold)
             content()
         }
     }
@@ -263,8 +263,8 @@ private fun DetailLine(label: String, value: String, isStrong: Boolean = false) 
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(label, color = Muted, fontSize = 14.sp)
-        Text(value, color = Ink, fontSize = 14.sp, fontWeight = if (isStrong) FontWeight.Bold else FontWeight.Normal)
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+        Text(value, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = if (isStrong) FontWeight.Bold else FontWeight.Normal)
     }
 }
 

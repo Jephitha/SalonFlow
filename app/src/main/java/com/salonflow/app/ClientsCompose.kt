@@ -71,7 +71,7 @@ private fun ClientsScreen(
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
     ) {
         Column(
             modifier = Modifier
@@ -81,13 +81,13 @@ private fun ClientsScreen(
         ) {
             Text(
                 text = "Clients",
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
             )
             Text(
                 text = "Add customers, create sales or bookings, and track balances.",
-                color = Muted,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 13.sp,
             )
 
@@ -108,7 +108,7 @@ private fun ClientsScreen(
             if (filtered.isEmpty()) {
                 Text(
                     text = if (q.isEmpty()) "No clients yet." else "No clients matching \"$searchQuery\"",
-                    color = Muted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 14.sp,
                     modifier = Modifier.padding(vertical = 16.dp),
                 )
@@ -149,7 +149,7 @@ private fun ClientCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Row(
@@ -162,14 +162,14 @@ private fun ClientCard(
             Column {
                 Text(
                     text = client.name,
-                    color = Ink,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                 )
                 val sub = if (client.phone.isEmpty()) "No phone" else client.phone
                 Text(
                     text = "$sub • $visits visits",
-                    color = Muted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp,
                 )
             }

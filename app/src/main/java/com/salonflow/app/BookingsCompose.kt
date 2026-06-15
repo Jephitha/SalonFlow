@@ -80,7 +80,7 @@ private fun BookingsScreen(
     val selectedBookings = database.bookingsForDate(selectedDate)
     val selectedSales = if (isPastDate) database.salesBetween(selectedDate, selectedDate) else emptyList()
 
-    Surface(color = Color.White, modifier = Modifier.fillMaxWidth()) {
+            Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -88,7 +88,7 @@ private fun BookingsScreen(
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text("Bookings", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text("Bookings", color = MaterialTheme.colorScheme.onSurface, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             BookingCalendar(
                 selectedDate = selectedDate,
                 visibleMonth = visibleMonth,
@@ -101,9 +101,9 @@ private fun BookingsScreen(
                     if (database.bookingsForDate(date).isEmpty() && !hasSales) onEmptyDateSelected(date)
                 },
             )
-            Text("Bookings on $selectedDate", color = Ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            Text("Bookings on $selectedDate", color = MaterialTheme.colorScheme.onSurface, fontSize = 17.sp, fontWeight = FontWeight.Bold)
             if (selectedBookings.isEmpty()) {
-                Text("No bookings yet. Tap the + button to add one.", color = Muted, fontSize = 14.sp)
+                Text("No bookings yet. Tap the + button to add one.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
             } else {
                 selectedBookings.forEach { booking ->
                     BookingCard(
@@ -151,7 +151,7 @@ private fun BookingCalendar(
                 SalonUtils.MONTH_YEAR_FMT.get()!!.format(visibleMonth.time),
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
             )
@@ -193,7 +193,7 @@ private fun BookingCalendar(
                             selected -> Brand
                             isToday -> Brand.copy(alpha = 0.12f)
                             isWeekend -> Rose.copy(alpha = 0.4f)
-                            else -> Cell
+                            else -> MaterialTheme.colorScheme.surfaceVariant
                         }
                         Box(
                             modifier = Modifier
@@ -246,7 +246,7 @@ private fun BookingCard(booking: SalonDatabase.Booking, amount: String, onClick:
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Row(
@@ -255,11 +255,11 @@ private fun BookingCard(booking: SalonDatabase.Booking, amount: String, onClick:
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("${booking.time}  ${booking.client}", color = Ink, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Text("${booking.serviceName} with ${booking.stylistName} • ${booking.payment}", color = Muted, fontSize = 12.sp)
+                Text("${booking.time}  ${booking.client}", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text("${booking.serviceName} with ${booking.stylistName} • ${booking.payment}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(amount, color = Ink, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(amount, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 StatusPill(booking.status)
             }
         }
@@ -280,8 +280,8 @@ private fun SaleCard(sale: SalonDatabase.Sale, amount: String) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Sale: ${sale.description}", color = Ink, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Text("${sale.payment}", color = Muted, fontSize = 12.sp)
+                Text("Sale: ${sale.description}", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text("${sale.payment}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(amount, color = Accent, fontWeight = FontWeight.Bold, fontSize = 14.sp)
