@@ -23,21 +23,22 @@ object SweeperScheduler {
         val cal = Calendar.getInstance()
         val dayOfWeek = cal.get(Calendar.DAY_OF_WEEK)
 
-        if (dayOfWeek == Calendar.SATURDAY) {
-            scheduleSaturday(context, alarmMgr, cal)
-        } else {
-            scheduleNormal(context, alarmMgr, cal)
+        when (dayOfWeek) {
+            Calendar.SUNDAY -> {
+                Log.i(TAG, "No sweeper alarms on Sunday; only BackupReceiver runs at 8 PM")
+            }
+            Calendar.SATURDAY -> {
+                scheduleSaturday(context, alarmMgr, cal)
+            }
+            else -> {
+                scheduleNormal(context, alarmMgr, cal)
+            }
         }
     }
 
     private fun scheduleNormal(context: Context, alarmMgr: AlarmManager, now: Calendar) {
-        val baseCal = Calendar.getInstance()
-        val dayOfWeek = baseCal.get(Calendar.DAY_OF_WEEK)
-        if (dayOfWeek == Calendar.SATURDAY) return
-
         scheduleOne(context, alarmMgr, now, 7, 30, SweeperConfig.ALARM_REQUEST_CODE_730, "7:30 AM")
         scheduleOne(context, alarmMgr, now, 14, 30, SweeperConfig.ALARM_REQUEST_CODE_1430, "2:30 PM")
-        scheduleOne(context, alarmMgr, now, 20, 0, SweeperConfig.ALARM_REQUEST_CODE_2000, "8:00 PM")
     }
 
     private fun scheduleOne(context: Context, alarmMgr: AlarmManager, now: Calendar,
@@ -93,6 +94,34 @@ object SweeperScheduler {
 
         cancelIfExists(context, alarmMgr, SweeperConfig.ALARM_REQUEST_CODE_730)
         Log.i(TAG, "Cancelled 7:30 AM sweep for Saturday")
+
+        cancelIfExists(context, alarmMgr, SweeperConfig.ALARM_REQUEST_CODE_2000)
+        Log.i(TAG, "Cancelled 8:00 PM sweep for Saturday")
+
+        val cal1430 = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 14)
+            set(Calendar.MINUTE, 30)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        if (!cal1430.before(now)) {
+            val pi1430 = PendingIntent.getBroadcast(
+                context, SweeperConfig.ALARM_REQUEST_CODE_1430,
+                Intent(context, SweeperAlarmReceiver::class.java).apply {
+                    action = SweeperConfig.ACTION_SWEEP_NORMAL
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            alarmMgr.cancel(pi1430)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmMgr.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal1430.timeInMillis, pi1430)
+            } else {
+                alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, cal1430.timeInMillis, AlarmManager.INTERVAL_DAY, pi1430)
+            }
+            Log.i(TAG, "Scheduled 2:30 PM Saturday sweep (next: ${cal1430.time})")
+        } else {
+            Log.i(TAG, "Skipped 2:30 PM Saturday sweep - time already passed")
+        }
     }
 
     private fun cancelIfExists(context: Context, alarmMgr: AlarmManager, requestCode: Int) {

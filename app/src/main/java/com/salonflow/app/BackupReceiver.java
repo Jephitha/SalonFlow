@@ -18,7 +18,8 @@ public class BackupReceiver extends BroadcastReceiver {
         String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(new Date());
         try {
             SalonDatabase database = new SalonDatabase(context);
-            database.backupNow();
+            File newBackup = database.backupNow();
+            database.deleteOldBackups(newBackup);
             String msg = "Daily backup completed at " + timestamp;
             NotificationRepository.getInstance(context).add("backup_success", "Backup Successful", msg);
             ReminderReceiver.postNotification(context, 3201, "Backup Successful", msg);

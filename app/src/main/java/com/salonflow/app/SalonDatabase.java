@@ -606,6 +606,17 @@ public class SalonDatabase extends SQLiteOpenHelper {
         return result;
     }
 
+    void deleteOldBackups(File keep) {
+        File dir = backupDir();
+        File[] files = dir.listFiles((d, name) -> name.endsWith(".db.enc"));
+        if (files == null) return;
+        for (File f : files) {
+            if (!f.equals(keep)) {
+                f.delete();
+            }
+        }
+    }
+
     File latestBackup() {
         List<File> files = backups();
         File latest = null;
