@@ -30,6 +30,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -88,7 +89,7 @@ private fun SettingsScreen(
         activity.updateFabForSettingsSection(currentSection)
     }
 
-    Surface(color = Color.White, modifier = Modifier.fillMaxSize()) {
+    Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().padding(12.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -98,7 +99,7 @@ private fun SettingsScreen(
                 if (currentSection != "home") {
                     Text(
                         text = "\u2190",
-                        color = Brand,
+                        color = MaterialTheme.colorScheme.primary,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.clickable {
@@ -116,7 +117,7 @@ private fun SettingsScreen(
                     "backup" -> "Backup & Restore"
                     else -> "Settings"
                 }
-                Text(title, color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
 
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -195,7 +196,7 @@ private fun SettingsScreen(
 @Composable
 private fun SettingsHub(onNavigate: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("Admin controls", color = Muted, fontSize = 13.sp)
+        Text("Admin controls", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
         SettingsRow("Services", "Manage salon service catalog", onClick = { onNavigate("services") })
         SettingsRow("Inventory", "Track products and reorder points", onClick = { onNavigate("inventory") })
         SettingsRow("Stylists", "Manage team members", onClick = { onNavigate("stylists") })
@@ -204,7 +205,7 @@ private fun SettingsHub(onNavigate: (String) -> Unit) {
         SettingsRow("Backup & Restore", "Local backup tools", onClick = { onNavigate("backup") })
         Text(
             "Version 0.0.1",
-            color = Muted,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 13.sp,
             fontStyle = FontStyle.Italic,
             modifier = Modifier.padding(top = 10.dp, bottom = 14.dp).align(Alignment.CenterHorizontally),
@@ -217,12 +218,12 @@ private fun SettingsRow(title: String, subtitle: String, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            Text(title, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            Text(subtitle, color = Muted, fontSize = 12.sp)
+            Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
         }
     }
 }
@@ -237,19 +238,19 @@ private fun StylistsScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             if (stylists.isEmpty()) {
-                Text("No stylists yet.", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
+                Text("No stylists yet.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(stylists, key = { it.id }) { stylist ->
                         Card(
                             modifier = Modifier.fillMaxWidth().clickable { onEdit(stylist) },
                             shape = RoundedCornerShape(8.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                         ) {
                             Column(modifier = Modifier.padding(14.dp)) {
-                                Text(stylist.name, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                                Text(if (stylist.phone.isEmpty()) "Phone not set" else stylist.phone, color = Muted, fontSize = 12.sp)
+                                Text(stylist.name, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                Text(if (stylist.phone.isEmpty()) "Phone not set" else stylist.phone, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                             }
                         }
                     }
@@ -270,14 +271,14 @@ private fun ServicesScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             if (services.isEmpty()) {
-                Text("No services yet.", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
+                Text("No services yet.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(services, key = { it.id }) { service ->
                         Card(
                             modifier = Modifier.fillMaxWidth().clickable { onEdit(service) },
                             shape = RoundedCornerShape(8.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                         ) {
                             Row(
@@ -286,10 +287,10 @@ private fun ServicesScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(service.name, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                    Text(service.name, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                                     Text(
                                         "${fmt(money, service.price)} \u2022 commission ${service.commission.toInt()}%",
-                                        color = Muted,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = 12.sp,
                                     )
                                 }
@@ -312,16 +313,16 @@ private fun InventoryScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             if (items.isEmpty()) {
-                Text("No inventory items yet.", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
+                Text("No inventory items yet.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(items, key = { it.id }) { item ->
                         val status = if (item.onHand <= item.reorderAt) "Reorder" else "Healthy"
-                        val statusColor = if (item.onHand <= item.reorderAt) Danger else Brand
+                        val statusColor = if (item.onHand <= item.reorderAt) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                         Card(
                             modifier = Modifier.fillMaxWidth().clickable { onEdit(item) },
                             shape = RoundedCornerShape(8.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                         ) {
                             Row(
@@ -329,10 +330,10 @@ private fun InventoryScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Column(modifier = Modifier.weight(0.6f)) {
-                                    Text(item.name, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                                    Text(item.category, color = Muted, fontSize = 12.sp)
+                                    Text(item.name, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                    Text(item.category, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                                 }
-                                Text("${item.onHand} left", color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.3f))
+                                Text("${item.onHand} left", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.3f))
                                 Text(status, color = statusColor, fontSize = 14.sp, modifier = Modifier.weight(0.3f))
                             }
                         }
@@ -353,10 +354,10 @@ private fun SecurityScreen(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         if (!settings.hasPin()) {
-            Text("No PIN set. Create one to secure the app.", color = Muted, fontSize = 14.sp)
+            Text("No PIN set. Create one to secure the app.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
             Button(
                 onClick = onCreatePin,
-                colors = ButtonDefaults.buttonColors(containerColor = Brand),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Create PIN") }
         } else {
@@ -364,7 +365,7 @@ private fun SecurityScreen(
             SecurityToggleRow("App Lock", settings.isAppLockEnabled(), onToggleAppLock)
             Button(
                 onClick = { activity.showSetPinDialog() },
-                colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = Brand),
+                colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Change PIN") }
         }
@@ -376,18 +377,18 @@ private fun SecurityToggleRow(label: String, checked: Boolean, onToggle: () -> U
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onToggle),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(label, color = Ink, fontSize = 16.sp, modifier = Modifier.weight(1f))
+            Text(label, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp, modifier = Modifier.weight(1f))
             Switch(
                 checked = checked,
                 onCheckedChange = { onToggle() },
-                colors = SwitchDefaults.colors(checkedTrackColor = Brand),
+                colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary),
             )
         }
     }
@@ -436,7 +437,7 @@ private fun BackupScreen(
             title = { Text("Backup data") },
             text = {
                 Column {
-                    Text("Enter your PIN to encrypt the backup.", fontSize = 13.sp, color = Muted)
+                    Text("Enter your PIN to encrypt the backup.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = pinInput,
@@ -447,7 +448,7 @@ private fun BackupScreen(
                         keyboardActions = KeyboardActions(onDone = { /* confirm button handles it */ }),
                         singleLine = true,
                         isError = pinError.isNotEmpty(),
-                        supportingText = if (pinError.isNotEmpty()) {{ Text(pinError, color = Danger) }} else null,
+                        supportingText = if (pinError.isNotEmpty()) {{ Text(pinError, color = MaterialTheme.colorScheme.error) }} else null,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -478,8 +479,8 @@ private fun BackupScreen(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("Local Backup", color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-        Text("Last backup: $lastBackup", color = Muted, fontSize = 13.sp)
+        Text("Local Backup", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text("Last backup: $lastBackup", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
 
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
             Button(
@@ -492,36 +493,36 @@ private fun BackupScreen(
                         Toast.makeText(activity, "Set a PIN in Security settings first", Toast.LENGTH_SHORT).show()
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Brand),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier.weight(1f),
             ) { Text("Backup data") }
             Button(
                 onClick = { activity.restoreBackup() },
-                colors = ButtonDefaults.buttonColors(containerColor = Accent),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                 modifier = Modifier.weight(1f),
             ) { Text("Restore data") }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
-        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Muted.copy(alpha = 0.3f)))
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)))
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text("Google Drive", color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-        Text("Last Drive upload: $lastDriveStr", color = Muted, fontSize = 13.sp)
+        Text("Google Drive", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text("Last Drive upload: $lastDriveStr", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
 
         if (driveSignedIn) {
-            Text("Signed in: $driveEmail", color = Muted, fontSize = 13.sp)
+            Text("Signed in: $driveEmail", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
             Button(
                 onClick = {
                     activity.signOutOfDrive()
                     driveSignedIn = false
                     driveEmail = null
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Danger),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Sign out") }
         } else {
-            Text("Not signed in", color = Muted, fontSize = 13.sp)
+            Text("Not signed in", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
             Button(
                 onClick = {
                     activity.signInToDrive(Runnable {
@@ -529,7 +530,7 @@ private fun BackupScreen(
                         driveEmail = driveManager.getSignedInEmail()
                     })
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Brand),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Sign in to Google Drive") }
         }

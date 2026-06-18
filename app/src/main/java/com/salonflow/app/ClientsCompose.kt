@@ -19,7 +19,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.lightColorScheme
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,7 +71,7 @@ private fun ClientsScreen(
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
     ) {
         Column(
             modifier = Modifier
@@ -81,13 +81,13 @@ private fun ClientsScreen(
         ) {
             Text(
                 text = "Clients",
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
             )
             Text(
                 text = "Add customers, create sales or bookings, and track balances.",
-                color = Muted,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 13.sp,
             )
 
@@ -98,8 +98,8 @@ private fun ClientsScreen(
                 placeholder = { Text("Search by name or phone...", fontSize = 14.sp) },
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Brand,
-                    cursorColor = Brand,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    cursorColor = MaterialTheme.colorScheme.primary,
                 ),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = {}),
@@ -108,7 +108,7 @@ private fun ClientsScreen(
             if (filtered.isEmpty()) {
                 Text(
                     text = if (q.isEmpty()) "No clients yet." else "No clients matching \"$searchQuery\"",
-                    color = Muted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 14.sp,
                     modifier = Modifier.padding(vertical = 16.dp),
                 )
@@ -142,14 +142,14 @@ private fun ClientCard(
     money: NumberFormat,
     onClick: () -> Unit,
 ) {
-    val balanceColor = if (balance > 0) Danger else Brand
+    val balanceColor = if (balance > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Row(
@@ -162,14 +162,14 @@ private fun ClientCard(
             Column {
                 Text(
                     text = client.name,
-                    color = Ink,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                 )
                 val sub = if (client.phone.isEmpty()) "No phone" else client.phone
                 Text(
                     text = "$sub • $visits visits",
-                    color = Muted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp,
                 )
             }

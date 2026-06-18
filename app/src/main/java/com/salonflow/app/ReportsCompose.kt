@@ -20,6 +20,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -167,14 +168,14 @@ private fun ReportsScreen(database: SalonDatabase) {
     val cashPct = ((cashTotal / pmTotal) * 100).toInt()
     val mobilePct = 100 - cashPct
 
-    Surface(color = Color.White, modifier = Modifier.fillMaxWidth()) {
+    Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            item { Text("Reports", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold) }
+            item { Text("Reports", color = MaterialTheme.colorScheme.onSurface, fontSize = 22.sp, fontWeight = FontWeight.Bold) }
 
             // Month selector
             item {
@@ -185,20 +186,20 @@ private fun ReportsScreen(database: SalonDatabase) {
                 ) {
                     Button(
                         onClick = { reportMonth = (reportMonth.clone() as Calendar).apply { add(Calendar.MONTH, -1) } },
-                        colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = Brand),
+                        colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = MaterialTheme.colorScheme.primary),
                         modifier = Modifier.weight(0.3f),
                     ) { Text("<") }
                     Text(
                         SalonUtils.MONTH_YEAR_FMT.get()!!.format(reportMonth.time),
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center,
-                        color = Ink,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                     )
                     Button(
                         onClick = { reportMonth = (reportMonth.clone() as Calendar).apply { add(Calendar.MONTH, 1) } },
-                        colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = Brand),
+                        colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = MaterialTheme.colorScheme.primary),
                         modifier = Modifier.weight(0.3f),
                     ) { Text(">") }
                 }
@@ -208,7 +209,7 @@ private fun ReportsScreen(database: SalonDatabase) {
                 item {
                     Text(
                         "No reports data for this month. Add bookings, sales, or expenses to see your reports.",
-                        color = Muted, fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp,
                     )
                 }
                 return@LazyColumn
@@ -221,14 +222,14 @@ private fun ReportsScreen(database: SalonDatabase) {
                         title = "Bookings revenue",
                         value = money.format(grossBookings / 100.0),
                         note = "Service bookings",
-                        valueColor = Brand,
+                        valueColor = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.weight(1f),
                     )
                     KpiCard(
                         title = "Product sales",
                         value = money.format(grossSales / 100.0),
                         note = "Walk-in sales",
-                        valueColor = Brand,
+                        valueColor = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.weight(1f),
                         onClick = {
                             if (grossSales > 0) showSales = true
@@ -245,14 +246,14 @@ private fun ReportsScreen(database: SalonDatabase) {
                         title = "Collected",
                         value = money.format(collected / 100.0),
                         note = "Payments received",
-                        valueColor = Brand,
+                        valueColor = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.weight(1f),
                     )
                     KpiCard(
                         title = "Expenses",
                         value = money.format(expenses / 100.0),
                         note = "Operating costs",
-                        valueColor = Danger,
+                        valueColor = MaterialTheme.colorScheme.error,
                         modifier = Modifier.weight(1f),
                         onClick = {
                             if (expenses > 0) showExpenses = true
@@ -269,14 +270,14 @@ private fun ReportsScreen(database: SalonDatabase) {
                         title = "Stock purchases",
                         value = money.format(stockPurchases / 100.0),
                         note = "Product costs",
-                        valueColor = Muted,
+                        valueColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                     )
                     KpiCard(
                         title = "Outstanding",
                         value = money.format(outstanding / 100.0),
                         note = "Unpaid balances",
-                        valueColor = Accent,
+                        valueColor = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.weight(1f),
                         onClick = {
                             if (outstanding > 0) showOutstanding = true
@@ -293,14 +294,14 @@ private fun ReportsScreen(database: SalonDatabase) {
                         title = "Profit on sales",
                         value = money.format(profit / 100.0),
                         note = "Sales \u2212 product cost",
-                        valueColor = if (profit >= 0) Brand else Danger,
+                        valueColor = if (profit >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                         modifier = Modifier.weight(1f),
                     )
                     KpiCard(
                         title = "Commission",
                         value = money.format(commission / 100.0),
                         note = "Stylist payouts",
-                        valueColor = Accent,
+                        valueColor = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.weight(1f),
                         onClick = {
                             if (commission > 0) showCommission = true
@@ -315,21 +316,21 @@ private fun ReportsScreen(database: SalonDatabase) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("Business Revenue", color = Ink, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text("Business Revenue", color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
-                            Text("COGS: ${money.format(cogs / 100.0)}", color = Muted, fontSize = 12.sp)
-                            Text("Stock: ${money.format(stockPurchases / 100.0)}", color = Muted, fontSize = 12.sp)
+                            Text("COGS: ${money.format(cogs / 100.0)}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                            Text("Stock: ${money.format(stockPurchases / 100.0)}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                         }
                         Text(
                             money.format(businessRevenue / 100.0),
-                            color = if (businessRevenue >= 0) Brand else Danger,
+                            color = if (businessRevenue >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                             fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 4.dp),
@@ -337,7 +338,7 @@ private fun ReportsScreen(database: SalonDatabase) {
                         if (outstanding > 0) {
                             Text(
                                 "Outstanding: ${money.format(outstanding / 100.0)}",
-                                color = Accent,
+                                color = MaterialTheme.colorScheme.secondary,
                                 fontSize = 13.sp,
                             )
                         }
@@ -371,11 +372,11 @@ private fun ReportsScreen(database: SalonDatabase) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("Payment mix", color = Ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                        Text("Payment mix", color = MaterialTheme.colorScheme.onSurface, fontSize = 17.sp, fontWeight = FontWeight.Bold)
                         PaymentMixBar("Cash", cashPct, money.format(cashTotal / 100.0))
                         PaymentMixBar("Mobile money", mobilePct, money.format(mobileTotal / 100.0))
                     }
@@ -404,11 +405,11 @@ private fun ReportsScreen(database: SalonDatabase) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("Monthly gross sales trend", color = Ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                        Text("Monthly gross sales trend", color = MaterialTheme.colorScheme.onSurface, fontSize = 17.sp, fontWeight = FontWeight.Bold)
                         months.forEach { (label, value) ->
                             val barLen = max(1, ((value / maxGross) * 20).toInt())
                             val bar = buildString { repeat(barLen) { append('\u2588') } }
@@ -418,11 +419,11 @@ private fun ReportsScreen(database: SalonDatabase) {
                                     .padding(top = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Text(label, color = Brand, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                 Spacer(Modifier.width(4.dp))
-                                Text(bar, color = Brand, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(bar, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                 Spacer(Modifier.width(4.dp))
-                                Text(money.format(value / 100.0), color = Brand, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(money.format(value / 100.0), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                             }
                         }
                     }
@@ -446,13 +447,13 @@ private fun KpiCard(
     Card(
         modifier = (if (onClick != null) modifier.clickable(onClick = onClick) else modifier),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
-            Text(title, color = Muted, fontSize = 13.sp)
+            Text(title, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
             Text(value, color = valueColor, fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 2.dp))
-            Text(note, color = Muted, fontSize = 11.sp)
+            Text(note, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
         }
     }
 }
@@ -465,10 +466,10 @@ private fun PaymentMixBar(label: String, pct: Int, formattedAmount: String) {
             .padding(top = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, color = Muted, fontSize = 14.sp, modifier = Modifier.weight(1f))
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, modifier = Modifier.weight(1f))
         Text(
             "$pct% ($formattedAmount)",
-            color = Ink,
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
         )
@@ -480,11 +481,11 @@ private fun MiniReportCard(title: String, rows: Map<String, String>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Text(title, color = Ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 17.sp, fontWeight = FontWeight.Bold)
             rows.forEach { (label, value) ->
                 ReportLine(label, value)
             }
@@ -499,14 +500,14 @@ private fun OutstandingScreen(database: SalonDatabase, money: NumberFormat, onBa
     val allBookings = remember(clientIds) { database.bookingsForClientIds(clientIds) }
     val allSales = remember(clientIds) { database.salesForClientIds(clientIds) }
 
-    Surface(color = Color.White, modifier = Modifier.fillMaxWidth()) {
+    Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("\u2190", color = Brand, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
-                Text("Outstanding Balances", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text("\u2190", color = MaterialTheme.colorScheme.primary, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
+                Text("Outstanding Balances", color = MaterialTheme.colorScheme.onSurface, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
             val outstandingClients = clients.filter { client ->
                 val bookings = allBookings[client.id] ?: emptyList()
@@ -514,7 +515,7 @@ private fun OutstandingScreen(database: SalonDatabase, money: NumberFormat, onBa
                 SalonUtils.outstandingBalance(bookings, sales) > 0
             }
             if (outstandingClients.isEmpty()) {
-                Text("No outstanding balances.", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
+                Text("No outstanding balances.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(outstandingClients, key = { it.id }) { client ->
@@ -526,10 +527,10 @@ private fun OutstandingScreen(database: SalonDatabase, money: NumberFormat, onBa
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(client.name, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                                Text(if (client.phone.isEmpty()) "" else client.phone, color = Muted, fontSize = 12.sp)
+                                Text(client.name, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                Text(if (client.phone.isEmpty()) "" else client.phone, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                             }
-                            Text(money.format(bal / 100.0), color = if (bal > 0) Danger else Brand, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Text(money.format(bal / 100.0), color = if (bal > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -544,19 +545,19 @@ private fun SalesDetailScreen(database: SalonDatabase, reportMonth: Calendar, mo
     val monthEnd = SalonUtils.monthEnd(reportMonth)
     val sales = remember(monthStart, monthEnd) { database.salesBetween(monthStart, monthEnd) }
 
-    Surface(color = Color.White, modifier = Modifier.fillMaxWidth()) {
+    Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("\u2190", color = Brand, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
-                Text("Product Sales", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text("\u2190", color = MaterialTheme.colorScheme.primary, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
+                Text("Product Sales", color = MaterialTheme.colorScheme.onSurface, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
             if (sales.isEmpty()) {
-                Text("No sales this month.", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
+                Text("No sales this month.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
             } else {
-                Text("${sales.size} sale(s) this month", color = Muted, fontSize = 13.sp)
+                Text("${sales.size} sale(s) this month", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(sales, key = { it.id }) { sale ->
                         Row(
@@ -564,10 +565,10 @@ private fun SalesDetailScreen(database: SalonDatabase, reportMonth: Calendar, mo
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(sale.description, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                                Text("${sale.date} \u2022 ${sale.payment}", color = Muted, fontSize = 12.sp)
+                                Text(sale.description, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                Text("${sale.date} \u2022 ${sale.payment}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                             }
-                            Text(money.format(sale.amount / 100.0), color = Brand, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Text(money.format(sale.amount / 100.0), color = MaterialTheme.colorScheme.primary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -582,19 +583,19 @@ private fun ExpensesDetailScreen(database: SalonDatabase, reportMonth: Calendar,
     val monthEnd = SalonUtils.monthEnd(reportMonth)
     val expenses = remember(monthStart, monthEnd) { database.expensesBetween(monthStart, monthEnd) }
 
-    Surface(color = Color.White, modifier = Modifier.fillMaxWidth()) {
+    Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("\u2190", color = Brand, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
-                Text("Expenses", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text("\u2190", color = MaterialTheme.colorScheme.primary, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
+                Text("Expenses", color = MaterialTheme.colorScheme.onSurface, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
             if (expenses.isEmpty()) {
-                Text("No expenses this month.", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
+                Text("No expenses this month.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
             } else {
-                Text("${expenses.size} expense(s) this month", color = Muted, fontSize = 13.sp)
+                Text("${expenses.size} expense(s) this month", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(expenses, key = { it.id }) { expense ->
                         Row(
@@ -602,10 +603,10 @@ private fun ExpensesDetailScreen(database: SalonDatabase, reportMonth: Calendar,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(expense.category, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                                Text(if (expense.note.isBlank()) expense.date else "${expense.date} \u2022 ${expense.note}", color = Muted, fontSize = 12.sp)
+                                Text(expense.category, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                Text(if (expense.note.isBlank()) expense.date else "${expense.date} \u2022 ${expense.note}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                             }
-                            Text(money.format(expense.amount / 100.0), color = Danger, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Text(money.format(expense.amount / 100.0), color = MaterialTheme.colorScheme.error, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -630,27 +631,27 @@ private fun CommissionDetailScreen(database: SalonDatabase, reportMonth: Calenda
         map.filter { it.value > 0 }.entries.sortedByDescending { it.value }
     }
 
-    Surface(color = Color.White, modifier = Modifier.fillMaxWidth()) {
+    Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("\u2190", color = Brand, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
-                Text("Commission", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text("\u2190", color = MaterialTheme.colorScheme.primary, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
+                Text("Commission", color = MaterialTheme.colorScheme.onSurface, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
             if (stylistCommMap.isEmpty()) {
-                Text("No commissions this month.", color = Muted, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
+                Text("No commissions this month.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, modifier = Modifier.padding(vertical = 16.dp))
             } else {
-                Text("${stylistCommMap.size} stylist(s) with commissions", color = Muted, fontSize = 13.sp)
+                Text("${stylistCommMap.size} stylist(s) with commissions", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(stylistCommMap, key = { it.key }) { (name, total) ->
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(name, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                            Text(money.format(total / 100.0), color = Accent, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Text(name, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                            Text(money.format(total / 100.0), color = MaterialTheme.colorScheme.secondary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -667,7 +668,7 @@ private fun ReportLine(label: String, value: String) {
             .padding(top = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, color = Muted, fontSize = 14.sp, modifier = Modifier.weight(1f))
-        Text(value, color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, modifier = Modifier.weight(1f))
+        Text(value, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold)
     }
 }

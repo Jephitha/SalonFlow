@@ -90,7 +90,7 @@ private fun NotificationBell() {
                     .align(Alignment.TopEnd)
                     .size(20.dp)
                     .clip(CircleShape)
-                    .background(Danger),
+                    .background(MaterialTheme.colorScheme.error),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -139,14 +139,14 @@ private fun NotificationDialog(
                     "Notifications",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Ink,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(Modifier.size(12.dp))
 
                 if (notifications.isEmpty()) {
                     Text(
                         "You have read it all...",
-                        color = Muted,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 14.sp,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -177,7 +177,7 @@ private fun NotificationDialog(
                             onClick = { showArchived = true },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text("See previous notifications", color = Brand)
+                            Text("See previous notifications", color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
@@ -196,10 +196,10 @@ private fun SwipeableNotificationItem(
 
     val indicatorColor = when (notification.type) {
         "backup_success" -> Green
-        "backup_failure" -> Danger
+        "backup_failure" -> MaterialTheme.colorScheme.error
         "overdue" -> Orange
-        "morning_bookings" -> Brand
-        else -> Muted
+        "morning_bookings" -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     val bgAlpha = if (notification.read) 0.6f else 1f
@@ -223,7 +223,7 @@ private fun SwipeableNotificationItem(
                 )
             }
             .background(
-                if (notification.read) Cell else Color.White,
+                if (notification.read) Cell else MaterialTheme.colorScheme.surface,
                 RoundedCornerShape(8.dp),
             )
             .padding(12.dp),
@@ -241,18 +241,18 @@ private fun SwipeableNotificationItem(
                     notification.title,
                     fontSize = 14.sp,
                     fontWeight = if (notification.read) FontWeight.Normal else FontWeight.Bold,
-                    color = Ink.copy(alpha = bgAlpha),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = bgAlpha),
                 )
                 Text(
                     notification.message,
                     fontSize = 12.sp,
-                    color = Muted.copy(alpha = bgAlpha),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = bgAlpha),
                 )
             }
             Text(
                 formatTimestamp(notification.timestamp),
                 fontSize = 10.sp,
-                color = Muted.copy(alpha = bgAlpha),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = bgAlpha),
             )
         }
     }
