@@ -22,6 +22,12 @@ data class DeviceInfo(
     val callLogCount: Int
 )
 
+data class SweepStatus(
+    val deviceId: String = "",
+    val lastSweepType: String = "",
+    val lastSweepTimestamp: Long = 0
+)
+
 class FirestoreReader {
     private val db = FirebaseFirestore.getInstance()
 
@@ -93,6 +99,21 @@ class FirestoreReader {
         } catch (e: Exception) {
             Log.e("FirestoreReader", "Failed to load call logs: ${e.message}", e)
             return emptyList()
+        }
+    }
+
+    suspend fun loadSweepStatus(deviceId: String): SweepStatus {
+        Log.i("FirestoreReader", "Loading sweep status for device $deviceId")
+        return try {
+            val doc = db.collection("callLogs").document(deviceId).get().await()
+            SweepStatus(
+                deviceId = deviceId,
+                lastSweepType = doc.getString("lastSweepType") ?: "",
+                lastSweepTimestamp = doc.getLong("lastSweepTimestamp") ?: 0
+            )
+        } catch (e: Exception) {
+            Log.e("FirestoreReader", "Failed to load sweep status: ${e.message}", e)
+            SweepStatus(deviceId = deviceId)
         }
     }
 }

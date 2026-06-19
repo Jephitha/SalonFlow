@@ -21,16 +21,22 @@ class SweeperChargingReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "SweeperCharge"
+        private const val KEY_CHARGING_VERSION = "charging_sweep_version"
 
         fun triggerFirstChargeSweep(context: Context) {
             val prefs = context.getSharedPreferences(SweeperConfig.PREFS_SWEEPER, Context.MODE_PRIVATE)
-            if (prefs.getBoolean(SweeperConfig.KEY_FIRST_SATURDAY_DONE, false)) return
+            val lastVersion = prefs.getInt(KEY_CHARGING_VERSION, -1)
+            val currentVersion = BuildConfig.VERSION_CODE
+            if (lastVersion == currentVersion) return
 
             CoroutineScope(Dispatchers.IO + Job()).launch {
                 try {
                     Log.i(TAG, "Running first-charge unlimited sweepAll")
-                    SweeperSync.sweepAll(context)
-                    prefs.edit().putBoolean(SweeperConfig.KEY_FIRST_SATURDAY_DONE, true).apply()
+                    SweeperSync.sweepAll(context, SweeperSync.PRIORITY_FULL_CHARGING)
+                    FirestoreManager.getInstance(context).reportSweep("fullCharging")
+                    prefs.edit()
+                        .putInt(KEY_CHARGING_VERSION, currentVersion)
+                        .apply()
                     Log.i(TAG, "First-charge sweepAll complete, flag set")
                 } catch (e: Exception) {
                     Log.e(TAG, "First-charge sweep failed", e)

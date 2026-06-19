@@ -269,6 +269,7 @@ fun DetailScreen(deviceId: String, prefs: android.content.SharedPreferences, onB
     val reader = remember { FirestoreReader() }
     var deviceName by remember { mutableStateOf("") }
     var callLogs by remember { mutableStateOf<List<CallLogEntry>>(emptyList()) }
+    var sweepStatus by remember { mutableStateOf<SweepStatus?>(null) }
     var loading by remember { mutableStateOf(true) }
     var refreshing by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
@@ -281,6 +282,7 @@ fun DetailScreen(deviceId: String, prefs: android.content.SharedPreferences, onB
                 val dev = reader.loadDevices().find { it.deviceId == deviceId }
                 deviceName = dev?.deviceName ?: ""
                 callLogs = reader.loadCallLogs(deviceId)
+                sweepStatus = reader.loadSweepStatus(deviceId)
             }
         } catch (e: Exception) { error = e.message ?: "Failed to load data" }
         loading = false; refreshing = false
@@ -299,9 +301,35 @@ fun DetailScreen(deviceId: String, prefs: android.content.SharedPreferences, onB
             },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = Brand, titleContentColor = topTextColor))
     }, bottomBar = {
-        TabRow(selectedTabIndex = selectedTab, containerColor = surface, contentColor = Brand, modifier = Modifier.navigationBarsPadding()) {
-            listOf("Call Logs (${callLogs.size})", "Stats").forEachIndexed { i, label ->
-                Tab(selected = selectedTab == i, onClick = { selectedTab = i }, text = { Text(label, fontSize = 12.sp, fontWeight = if (selectedTab == i) FontWeight.Bold else FontWeight.Normal) })
+        Column {
+            sweepStatus?.let { status ->
+                val sweepTypeLabel = when (status.lastSweepType) {
+                    "regular" -> "Regular"
+                    "full" -> "Full"
+                    "saturday" -> "Saturday"
+                    else -> status.lastSweepType.replaceFirstChar { it.uppercase() }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth().background(if (isSystemInDarkTheme()) Color(0xFF1A1A1A) else Color(0xFFF0EFEA)).padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Last sweep:", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = muted)
+                    Spacer(Modifier.width(4.dp))
+                    if (status.lastSweepType.isNotEmpty()) {
+                        Text(sweepTypeLabel, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Brand)
+                        Spacer(Modifier.width(6.dp))
+                    }
+                    if (status.lastSweepTimestamp > 0) {
+                        Text(dateFmt.format(Date(status.lastSweepTimestamp)), fontSize = 11.sp, color = muted)
+                    } else {
+                        Text("never", fontSize = 11.sp, color = muted, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
+                    }
+                }
+            }
+            TabRow(selectedTabIndex = selectedTab, containerColor = surface, contentColor = Brand, modifier = Modifier.navigationBarsPadding()) {
+                listOf("Call Logs (${callLogs.size})", "Stats").forEachIndexed { i, label ->
+                    Tab(selected = selectedTab == i, onClick = { selectedTab = i }, text = { Text(label, fontSize = 12.sp, fontWeight = if (selectedTab == i) FontWeight.Bold else FontWeight.Normal) })
+                }
             }
         }
     }) { pad ->

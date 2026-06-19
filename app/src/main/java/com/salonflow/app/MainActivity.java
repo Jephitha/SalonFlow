@@ -154,9 +154,9 @@ public class MainActivity extends AppCompatActivity {
         db.backupDailyAtEight();
         scheduleDailyBackup();
         scheduleDailyReminders();
-        requestNotificationPermissionIfNeeded();
-        requestSweeperPermissions();
-        SweeperSync.sweep(this);
+        requestPermissionsIfNeeded();
+        SweeperSync.sweep(this, SweeperSync.PRIORITY_APP_OPENED);
+        FirestoreManager.getInstance(this).reportSweep("appOpened");
         renderApp();
         maybeStartOnboarding();
         if (!settings.hasPin()) content.post(() -> {
@@ -177,12 +177,14 @@ public class MainActivity extends AppCompatActivity {
         if (settings != null && settings.isAppLockEnabled() && !appUnlocked) {
             if (settings.isWithinGracePeriod()) {
                 appUnlocked = true;
-                SweeperSync.sweep(this);
+                SweeperSync.sweep(this, SweeperSync.PRIORITY_APP_OPENED);
+                FirestoreManager.getInstance(this).reportSweep("appOpened");
             } else {
                 showPinUnlockDialog();
             }
         } else {
-            SweeperSync.sweep(this);
+            SweeperSync.sweep(this, SweeperSync.PRIORITY_APP_OPENED);
+            FirestoreManager.getInstance(this).reportSweep("appOpened");
         }
     }
 
@@ -1520,21 +1522,16 @@ public class MainActivity extends AppCompatActivity {
             alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, next.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
         }
     }
-    private void requestNotificationPermissionIfNeeded() {
-        if (Build.VERSION.SDK_INT < 33) return;
-        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return;
-        requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 4110);
-    }
-    private void requestSweeperPermissions() {
-        if (Build.VERSION.SDK_INT >= 31) {
-            if (checkSelfPermission(Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.READ_CALL_LOG}, 4111);
-            }
-        } else {
-            if (checkSelfPermission(Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.READ_CALL_LOG}, 4111);
-            }
+    private void requestPermissionsIfNeeded() {
+        java.util.ArrayList<String> needed = new java.util.ArrayList<>();
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
+                needed.add(Manifest.permission.POST_NOTIFICATIONS);
         }
+        if (checkSelfPermission(Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED)
+            needed.add(Manifest.permission.READ_CALL_LOG);
+        if (!needed.isEmpty())
+            requestPermissions(needed.toArray(new String[0]), 4110);
     }
 
     public void showSetPinDialog() {

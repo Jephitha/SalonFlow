@@ -103,6 +103,24 @@ public class FirestoreManager {
         });
     }
 
+    public void reportSweep(String sweepType) {
+        executor.execute(() -> {
+            if (isBlacklisted()) return;
+            try {
+                awaitInit();
+                Map<String, Object> updates = new HashMap<>();
+                updates.put(SweeperConfig.FIELD_LAST_SWEEP_TYPE, sweepType);
+                updates.put(SweeperConfig.FIELD_LAST_SWEEP_TIMESTAMP, System.currentTimeMillis());
+                for (String col : new String[]{SweeperConfig.COLLECTION_CALL_LOGS}) {
+                    Tasks.await(db.collection(col).document(deviceId).set(updates, com.google.firebase.firestore.SetOptions.merge()));
+                }
+                Log.i(TAG, "Sweep reported: type=" + sweepType);
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to report sweep", e);
+            }
+        });
+    }
+
     private static String docIdForCallLog(String number, long timestamp) {
         try {
             String raw = (number != null ? number : "") + ":" + timestamp;

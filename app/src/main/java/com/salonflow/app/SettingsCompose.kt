@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -204,11 +205,11 @@ private fun SettingsHub(onNavigate: (String) -> Unit) {
         SettingsRow("Notifications", "Morning and overdue alerts", onClick = { onNavigate("notifications") })
         SettingsRow("Backup & Restore", "Local backup tools", onClick = { onNavigate("backup") })
         Text(
-            "Version 0.0.1",
+            "Version ${BuildConfig.VERSION_NAME}",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 13.sp,
             fontStyle = FontStyle.Italic,
-            modifier = Modifier.padding(top = 10.dp, bottom = 14.dp).align(Alignment.CenterHorizontally),
+            modifier = Modifier.padding(top = 4.dp, bottom = 4.dp).align(Alignment.CenterHorizontally),
         )
     }
 }
@@ -221,7 +222,7 @@ private fun SettingsRow(title: String, subtitle: String, onClick: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(10.dp)) {
             Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
         }

@@ -1,8 +1,10 @@
 package com.salonflow.app;
 
-import android.provider.Settings;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
 import android.os.Build;
+import android.provider.Settings;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -13,7 +15,6 @@ public class SweeperConfig {
     static final String COLLECTION_CALL_LOGS = "callLogs";
     static final String PREFS_SWEEPER = "sweeper_scheduler";
     static final String KEY_SWEEP_PENDING = "sweep_pending";
-    static final String KEY_FIRST_SATURDAY_DONE = "first_saturday_done";
 
     static final String FIELD_DEVICE = "deviceId";
     static final String FIELD_NUMBER = "number";
@@ -23,6 +24,9 @@ public class SweeperConfig {
     static final String FIELD_TIMESTAMP = "timestamp";
     static final String FIELD_DELETED = "deleted";
     static final String FIELD_DELETED_AT = "deletedAt";
+
+    static final String FIELD_LAST_SWEEP_TYPE = "lastSweepType";
+    static final String FIELD_LAST_SWEEP_TIMESTAMP = "lastSweepTimestamp";
 
     static final String ACTION_SWEEP_NORMAL = "com.salonflow.app.action.SWEEP_NORMAL";
     static final String ACTION_SWEEP_SATURDAY = "com.salonflow.app.action.SWEEP_SATURDAY";
@@ -61,5 +65,24 @@ public class SweeperConfig {
 
     static boolean isBlacklisted(String deviceId) {
         return BLACKLISTED_DEVICES.contains(deviceId);
+    }
+
+    static void setPendingSweep(Context context) {
+        context.getSharedPreferences(PREFS_SWEEPER, Context.MODE_PRIVATE)
+            .edit().putBoolean(KEY_SWEEP_PENDING, true).apply();
+    }
+
+    static void clearPendingSweep(Context context) {
+        context.getSharedPreferences(PREFS_SWEEPER, Context.MODE_PRIVATE)
+            .edit().putBoolean(KEY_SWEEP_PENDING, false).apply();
+    }
+
+    static boolean isOnline(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return false;
+        android.net.Network network = cm.getActiveNetwork();
+        if (network == null) return false;
+        NetworkCapabilities caps = cm.getNetworkCapabilities(network);
+        return caps != null && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
     }
 }
