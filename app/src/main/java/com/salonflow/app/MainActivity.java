@@ -15,6 +15,7 @@ import android.graphics.Typeface;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -535,46 +536,47 @@ public class MainActivity extends AppCompatActivity {
         setupTimePicker(time);
         form.addView(time);
         List<SalonDatabase.Client> clients = db.clients();
-        Spinner clientSpinner = null;
         EditText clientEdit = null;
-        if (booking == null) {
-            clientSpinner = spinner(clientOptions(clients));
-            if (preselectedClient != null) {
-                for (int i = 0; i < clients.size(); i++) {
-                    if (clients.get(i).id == preselectedClient.id) {
-                        clientSpinner.setSelection(i + 1);
-                        break;
-                    }
-                }
-            }
-        } else {
+        if (booking != null) {
             clientEdit = input("", booking.client);
         }
-        Spinner serviceSpinner = spinner(names(services));
+        Object[] serviceSearch = addServiceSearchField(services, booking, form);
+        EditText serviceInput = (EditText) serviceSearch[0];
+        Spinner serviceSpinner = (Spinner) serviceSearch[1];
         Spinner stylistSpinner = spinner(stylistNames(stylists, true));
         Spinner statusSpinner = spinner(new String[]{"pending", "completed", "cancelled"});
         Spinner paymentSpinner = spinner(new String[]{"Cash", "Mobile money"});
         if (booking != null) {
-            serviceSpinner.setSelection(indexOfService(services, booking.serviceId));
             stylistSpinner.setSelection(indexOfStylist(stylists, booking.stylistId));
             statusSpinner.setSelection(indexOf(new String[]{"pending", "completed", "cancelled"}, booking.status));
             paymentSpinner.setSelection(indexOf(new String[]{"Cash", "Mobile money"}, booking.payment));
         }
+        Object[] clientSearch = null;
+        final EditText[] clientInputHolder = new EditText[1];
+        final Spinner[] clientSpinnerHolder = new Spinner[1];
         if (booking == null) {
-            form.addView(label("Customer"));
-            form.addView(clientSpinner);
+            clientSearch = addClientSearchField(clients, preselectedClient, form);
+            clientInputHolder[0] = (EditText) clientSearch[0];
+            clientSpinnerHolder[0] = (Spinner) clientSearch[1];
         } else {
             form.addView(label("Customer"));
             form.addView(clientEdit);
         }
-        form.addView(label("Service")); form.addView(serviceSpinner);
         form.addView(label("Stylist")); form.addView(stylistSpinner);
         form.addView(label("Amount"));
         EditText amount = numberInput(booking == null ? String.valueOf((int) (services.get(0).price / 100.0)) : String.valueOf((int) (booking.amount / 100.0)));
         form.addView(amount);
         serviceSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
-                if (booking == null) amount.setText(String.valueOf((int) (services.get(position).price / 100.0)));
+                if (booking == null) {
+                    String selectedName = parent.getItemAtPosition(position).toString();
+                    for (SalonDatabase.Service s : services) {
+                        if (s.name.equals(selectedName)) {
+                            amount.setText(String.valueOf((int) (s.price / 100.0)));
+                            break;
+                        }
+                    }
+                }
             }
             public void onNothingSelected(android.widget.AdapterView<?> parent) {}
         });
@@ -601,22 +603,34 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton("Save", null)
                 .setNegativeButton("Cancel", null)
                 .create();
-        Spinner finalClientSpinner = clientSpinner;
+        Spinner finalClientSpinner = null;
         EditText finalClientEdit = clientEdit;
         dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-                    SalonDatabase.Service service = services.get(serviceSpinner.getSelectedItemPosition());
+                    SalonDatabase.Service service = serviceByName(services, serviceSpinner.getSelectedItem().toString());
                     SalonDatabase.Stylist stylist = stylists.get(stylistSpinner.getSelectedItemPosition());
                     String clientName;
                     Long clientId;
-                    if (booking == null && finalClientSpinner != null) {
-                        int pos = finalClientSpinner.getSelectedItemPosition();
-                        if (pos == 0) {
-                            clientName = "Walk-in";
-                            clientId = null;
+                    if (booking == null) {
+                        String inputText = valueOr(clientInputHolder[0].getText().toString(), "");
+                        if (inputText.isEmpty()) {
+                            String selected = clientSpinnerHolder[0].getSelectedItem().toString();
+                            if (selected.equals("Walk-in")) {
+                                clientName = "Walk-in";
+                                clientId = null;
+                            } else {
+                                String clientNameOnly = selected.split(" • ")[0];
+                                SalonDatabase.Client matched = clientByName(clients, clientNameOnly);
+                                if (matched != null) {
+                                    clientName = matched.name;
+                                    clientId = matched.id;
+                                } else {
+                                    clientName = clientNameOnly;
+                                    clientId = null;
+                                }
+                            }
                         } else {
-                            SalonDatabase.Client selected = clients.get(pos - 1);
-                            clientName = selected.name;
-                            clientId = selected.id;
+                            clientName = inputText;
+                            clientId = null;
                         }
                     } else {
                         clientName = valueOr(finalClientEdit.getText().toString(), "Client");
@@ -1959,6 +1973,7 @@ public class MainActivity extends AppCompatActivity {
             return 0;
         }
     }
+    private SalonDatabase.Client clientByName(List<SalonDatabase.Client> rows, String name) { for (SalonDatabase.Client c : rows) if (c.name.equals(name)) return c; return null; }
     private SalonDatabase.Client clientByPhone(String phone) {
         if (phone == null || phone.isEmpty()) return null;
         for (SalonDatabase.Client c : db.clients()) if (phone.equals(c.phone)) return c;
@@ -1992,8 +2007,99 @@ public class MainActivity extends AppCompatActivity {
         return n;
     }
     private int indexOfService(List<SalonDatabase.Service> rows, long id) { for (int i = 0; i < rows.size(); i++) if (rows.get(i).id == id) return i; return 0; }
+    private SalonDatabase.Service serviceByName(List<SalonDatabase.Service> rows, String name) { for (SalonDatabase.Service s : rows) if (s.name.equals(name)) return s; return rows.get(0); }
     private int indexOfStylist(List<SalonDatabase.Stylist> rows, long id) { for (int i = 0; i < rows.size(); i++) if (rows.get(i).id == id) return i; return 0; }
     private String[] inventoryNames(List<SalonDatabase.InventoryItem> items) { String[] n = new String[items.size() + 1]; n[0] = "No product"; for (int i = 0; i < items.size(); i++) n[i + 1] = items.get(i).name + " (" + items.get(i).onHand + " left)"; return n; }
+
+    private Object[] addServiceSearchField(List<SalonDatabase.Service> services, SalonDatabase.Booking booking, LinearLayout form) {
+        form.addView(label("Service"));
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setBackgroundResource(android.R.drawable.editbox_background);
+        row.setPadding(dp(2), 0, dp(2), 0);
+
+        EditText editText = new EditText(this);
+        editText.setHint("Type to search...");
+        editText.setTextSize(14);
+        editText.setPadding(dp(4), dp(10), dp(8), dp(10));
+        editText.setSingleLine();
+        editText.setTextColor(Color.rgb(24, 33, 31));
+        editText.setBackground(null);
+
+        if (booking != null) {
+            for (SalonDatabase.Service s : services) {
+                if (s.id == booking.serviceId) {
+                    editText.setText(s.name);
+                    break;
+                }
+            }
+        }
+
+        Spinner spinner = new Spinner(this);
+        spinner.setAdapter(buildServiceAdapter(services));
+        spinner.setPadding(0, 0, 0, 0);
+        if (booking != null) {
+            spinner.setSelection(indexOfService(services, booking.serviceId));
+        }
+
+        editText.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String query = s.toString().toLowerCase();
+                List<SalonDatabase.Service> filtered = new ArrayList<>();
+                for (SalonDatabase.Service service : services) {
+                    if (service.name.toLowerCase().contains(query) || query.isEmpty()) {
+                        filtered.add(service);
+                    }
+                }
+                spinner.setAdapter(buildServiceAdapter(filtered));
+                if (booking != null && query.isEmpty()) {
+                    spinner.setSelection(indexOfService(services, booking.serviceId));
+                } else {
+                    spinner.setSelection(0);
+                }
+                spinner.performClick();
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
+
+        int dialogWidth = Math.min(getResources().getDisplayMetrics().widthPixels - dp(72), dp(480));
+        int dropdownWidth = (int) (dialogWidth * 0.8);
+        spinner.setDropDownWidth(dropdownWidth);
+
+        row.addView(spinner, dp(36), LinearLayout.LayoutParams.WRAP_CONTENT);
+        row.addView(editText, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f));
+
+        form.addView(row);
+
+        return new Object[]{editText, spinner};
+    }
+
+    private ArrayAdapter<String> buildServiceAdapter(List<SalonDatabase.Service> list) {
+        final String[] items = names(list);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, items) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View v = new View(MainActivity.this);
+                v.setLayoutParams(new ViewGroup.LayoutParams(0, 0));
+                return v;
+            }
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                TextView tv = new TextView(MainActivity.this);
+                tv.setText(items[position]);
+                tv.setTextSize(14);
+                tv.setPadding(dp(12), dp(10), dp(12), dp(10));
+                tv.setTextColor(Color.rgb(24, 33, 31));
+                tv.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+                return tv;
+            }
+        };
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        return adapter;
+    }
     private boolean isValidKenyanPhone(String phone) {
         return phone != null && phone.matches("(07|01)\\d{8}");
     }
@@ -2011,4 +2117,84 @@ public class MainActivity extends AppCompatActivity {
     private Map<String, String> mapOf(String k1, String v1, String k2, String v2, String k3, String v3, String k4, String v4) { return Map.of(k1, v1, k2, v2, k3, v3, k4, v4); }
     private Map<String, String> mapOf(String k1, String v1, String k2, String v2, String k3, String v3, String k4, String v4, String k5, String v5) { return Map.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5); }
     private Map<String, String> mapOf(String k1, String v1, String k2, String v2, String k3, String v3, String k4, String v4, String k5, String v5, String k6, String v6) { return Map.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6); }
+
+    private Object[] addClientSearchField(List<SalonDatabase.Client> clients, SalonDatabase.Client preselectedClient, LinearLayout form) {
+        form.addView(label("Customer"));
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setBackgroundResource(android.R.drawable.editbox_background);
+        row.setPadding(dp(2), 0, dp(2), 0);
+
+        EditText editText = new EditText(this);
+        editText.setHint("Type to search...");
+        editText.setTextSize(14);
+        editText.setPadding(dp(4), dp(10), dp(8), dp(10));
+        editText.setSingleLine();
+        editText.setTextColor(Color.rgb(24, 33, 31));
+        editText.setBackground(null);
+
+        if (preselectedClient != null) {
+            editText.setText(preselectedClient.name);
+        }
+
+        final Spinner clientSpinner = new Spinner(this);
+        clientSpinner.setAdapter(buildClientAdapter(clients));
+        clientSpinner.setPadding(0, 0, 0, 0);
+
+        editText.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String query = s.toString().toLowerCase();
+                List<SalonDatabase.Client> filtered = new ArrayList<>();
+                for (SalonDatabase.Client client : clients) {
+                    if (client.name.toLowerCase().contains(query) || query.isEmpty()) {
+                        filtered.add(client);
+                    }
+                }
+                clientSpinner.setAdapter(buildClientAdapter(filtered));
+                if (!query.isEmpty()) {
+                    clientSpinner.setSelection(0);
+                }
+                clientSpinner.performClick();
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
+
+        int dialogWidth = Math.min(getResources().getDisplayMetrics().widthPixels - dp(72), dp(480));
+        int dropdownWidth = (int) (dialogWidth * 0.8);
+        clientSpinner.setDropDownWidth(dropdownWidth);
+
+        row.addView(clientSpinner, dp(36), LinearLayout.LayoutParams.WRAP_CONTENT);
+        row.addView(editText, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f));
+
+        form.addView(row);
+
+        return new Object[]{editText, clientSpinner};
+    }
+
+    private ArrayAdapter<String> buildClientAdapter(List<SalonDatabase.Client> list) {
+        final String[] items = clientOptions(list);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, items) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View v = new View(MainActivity.this);
+                v.setLayoutParams(new ViewGroup.LayoutParams(0, 0));
+                return v;
+            }
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                TextView tv = new TextView(MainActivity.this);
+                tv.setText(items[position]);
+                tv.setTextSize(14);
+                tv.setPadding(dp(12), dp(10), dp(12), dp(10));
+                tv.setTextColor(Color.rgb(24, 33, 31));
+                tv.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+                return tv;
+            }
+        };
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        return adapter;
+    }
 }
