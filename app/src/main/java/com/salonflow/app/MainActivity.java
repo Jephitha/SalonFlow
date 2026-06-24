@@ -868,7 +868,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout form = vertical();
         form.setPadding(dp(18), dp(8), dp(18), 0);
         form.addView(label("Customer name"));
-        EditText name = input("", client == null ? "" : client.name);
+        EditText name = capitalizedInput(client == null ? "" : client.name);
         form.addView(name);
         form.addView(label("Phone number"));
         EditText phone = input("", client == null ? "" : client.phone);
@@ -884,7 +884,7 @@ public class MainActivity extends AppCompatActivity {
                         return;
                     }
                     if (client == null) {
-                        String newName = valueOr(name.getText().toString(), "Customer");
+                        String newName = capitalizeWords(valueOr(name.getText().toString(), "Customer"));
                         if (!phoneVal.isEmpty()) {
                             SalonDatabase.Client existing = clientByPhone(phoneVal);
                             if (existing != null) {
@@ -905,7 +905,7 @@ public class MainActivity extends AppCompatActivity {
                         db.saveClient(new SalonDatabase.Client(0, newName, phoneVal));
                         rerender();
                     } else if (client != null) {
-                        db.saveClient(new SalonDatabase.Client(client.id, valueOr(name.getText().toString(), "Customer"), phoneVal));
+                        db.saveClient(new SalonDatabase.Client(client.id, capitalizeWords(valueOr(name.getText().toString(), "Customer")), phoneVal));
                         rerender();
                     }
                 })
@@ -1136,7 +1136,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout form = vertical();
         form.setPadding(dp(18), dp(8), dp(18), 0);
         form.addView(label("Name"));
-        EditText name = input("", item == null ? "" : item.name);
+        EditText name = capitalizedInput(item == null ? "" : item.name);
         form.addView(name);
         form.addView(label("Category"));
         EditText category = input("", item == null ? "" : item.category);
@@ -1165,7 +1165,7 @@ public class MainActivity extends AppCompatActivity {
                             AlertDialog.Builder builder = new AlertDialog.Builder(this).setTitle("Manage inventory").setView(form)
                                     .setPositiveButton("Save", (d, w) -> {
                                         double sPrice = parseCents(sellPrice.getText().toString(), item.sellingPrice > 0 ? item.sellingPrice : 0);
-                                        db.saveInventory(new SalonDatabase.InventoryItem(item.id, valueOr(name.getText().toString(), item.name), valueOr(category.getText().toString(), item.category), item.onHand, (int) parseAmount(reorder.getText().toString(), item.reorderAt), item.cost, sPrice));
+                                        db.saveInventory(new SalonDatabase.InventoryItem(item.id, capitalizeWords(valueOr(name.getText().toString(), item.name)), valueOr(category.getText().toString(), item.category), item.onHand, (int) parseAmount(reorder.getText().toString(), item.reorderAt), item.cost, sPrice));
                                         int added = (int) parseAmount(newStock.getText().toString(), 0);
                                         if (added > 0) {
                                             double pPrice = parseCents(cost.getText().toString(), 0);
@@ -1203,7 +1203,7 @@ public class MainActivity extends AppCompatActivity {
                         int initStock = (int) parseAmount(stock.getText().toString(), 0);
                         double pPrice = parseCents(cost.getText().toString(), 0);
                         double sPrice = parseCents(sellPrice.getText().toString(), 0);
-                        String itemName = valueOr(name.getText().toString(), "Product");
+                        String itemName = capitalizeWords(valueOr(name.getText().toString(), "Product"));
                         long newId = db.saveInventory(new SalonDatabase.InventoryItem(0, itemName, valueOr(category.getText().toString(), "Retail"), initStock, (int) parseAmount(reorder.getText().toString(), 5), pPrice, sPrice));
                         if (initStock > 0) {
                             SQLiteDatabase dba = db.getWritableDatabase();
@@ -1229,7 +1229,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout form = vertical();
         form.setPadding(dp(18), dp(8), dp(18), 0);
         form.addView(label("Name"));
-        EditText name = input("", stylist == null ? "" : stylist.name);
+        EditText name = capitalizedInput(stylist == null ? "" : stylist.name);
         form.addView(name);
         form.addView(label("Phone number"));
         EditText phone = input("", stylist == null ? "" : stylist.phone);
@@ -1250,7 +1250,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Stylist phone number already exists", Toast.LENGTH_LONG).show();
                 return;
             }
-            db.saveStylist(new SalonDatabase.Stylist(currentId, valueOr(name.getText().toString(), "Stylist"), stylist == null ? 0 : stylist.commission, phoneValue));
+            db.saveStylist(new SalonDatabase.Stylist(currentId, capitalizeWords(valueOr(name.getText().toString(), "Stylist")), stylist == null ? 0 : stylist.commission, phoneValue));
             rerender();
             alert.dismiss();
         }));
@@ -1261,7 +1261,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout form = vertical();
         form.setPadding(dp(18), dp(8), dp(18), 0);
         form.addView(label("Name"));
-        EditText name = input("", service == null ? "" : service.name);
+        EditText name = capitalizedInput(service == null ? "" : service.name);
         form.addView(name);
         form.addView(label("Price"));
         EditText price = numberInput(service == null ? "" : String.valueOf((int) (service.price / 100.0)));
@@ -1270,7 +1270,7 @@ public class MainActivity extends AppCompatActivity {
         EditText commission = numberInput(service == null ? "30" : String.valueOf((int) service.commission));
         form.addView(commission);
         AlertDialog.Builder builder = new AlertDialog.Builder(this).setTitle(service == null ? "Add service" : "Edit service").setView(form)
-                .setPositiveButton("Save", (d, w) -> { db.saveService(new SalonDatabase.Service(service == null ? 0 : service.id, valueOr(name.getText().toString(), "Service"), parseCents(price.getText().toString(), 0), parseAmount(commission.getText().toString(), 30))); rerender(); })
+                .setPositiveButton("Save", (d, w) -> { db.saveService(new SalonDatabase.Service(service == null ? 0 : service.id, capitalizeWords(valueOr(name.getText().toString(), "Service")), parseCents(price.getText().toString(), 0), parseAmount(commission.getText().toString(), 30))); rerender(); })
                 .setNegativeButton("Cancel", null);
         if (service != null) builder.setNeutralButton("Delete", (d, w) -> { confirmDelete("Delete service", "Delete " + service.name + "?", () -> { db.deleteService(service.id); rerender(); }); });
         builder.show();
@@ -1896,7 +1896,19 @@ public class MainActivity extends AppCompatActivity {
     private TextView text(String value, int sp, int color, int style) { TextView v = new TextView(this); v.setText(value); v.setTextSize(sp); v.setTextColor(color); v.setTypeface(Typeface.DEFAULT, style); v.setIncludeFontPadding(true); return v; }
     private TextView label(String value) { TextView l = text(value, 12, MUTED, Typeface.BOLD); l.setPadding(0, dp(10), 0, dp(4)); return l; }
     private EditText input(String hint, String value) { EditText e = new EditText(this); e.setHint(""); e.setText(value); e.setSingleLine(true); return e; }
+    private EditText capitalizedInput(String value) { EditText e = input("", value); e.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS); return e; }
     private EditText numberInput(String value) { EditText e = input("", value); e.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL); return e; }
+    private String capitalizeWords(String s) {
+        if (s == null || s.trim().isEmpty()) return s == null ? "" : s.trim();
+        StringBuilder sb = new StringBuilder();
+        boolean capitalizeNext = true;
+        for (char c : s.trim().toCharArray()) {
+            if (Character.isWhitespace(c)) { capitalizeNext = true; sb.append(c); }
+            else if (capitalizeNext) { sb.append(Character.toUpperCase(c)); capitalizeNext = false; }
+            else { sb.append(Character.toLowerCase(c)); }
+        }
+        return sb.toString();
+    }
     private View field(String labelText, String value) { LinearLayout wrapper = vertical(); wrapper.addView(label(labelText)); wrapper.addView(input("", value)); return wrapper; }
     private Spinner spinner(String[] values) { Spinner s = new Spinner(this); s.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, values)); return s; }
     private LinearLayout.LayoutParams wrapParams() { return new LinearLayout.LayoutParams(-2, -2); }
