@@ -385,33 +385,40 @@ public class SalonDatabase extends SQLiteOpenHelper {
 
     List<Stylist> stylists() {
         List<Stylist> rows = new ArrayList<>();
-        Cursor c = getReadableDatabase().rawQuery("SELECT id,name,commission,phone FROM stylists ORDER BY name", null);
+        Cursor c = getReadableDatabase().rawQuery("SELECT id,name,commission,phone FROM stylists", null);
         while (c.moveToNext()) rows.add(new Stylist(c.getLong(0), dec(c.getString(1)), c.getDouble(2), dec(c.getString(3))));
         c.close();
+        Collections.sort(rows, (a, b) -> a.name.compareToIgnoreCase(b.name));
         return rows;
     }
 
     List<Service> services() {
         List<Service> rows = new ArrayList<>();
-        Cursor c = getReadableDatabase().rawQuery("SELECT id,name,price,commission FROM services ORDER BY name", null);
+        Cursor c = getReadableDatabase().rawQuery("SELECT id,name,price,commission FROM services", null);
         while (c.moveToNext()) rows.add(new Service(c.getLong(0), dec(c.getString(1)), c.getDouble(2), c.getDouble(3)));
         c.close();
+        Collections.sort(rows, (a, b) -> a.name.compareToIgnoreCase(b.name));
         return rows;
     }
 
     List<Client> clients() {
         List<Client> rows = new ArrayList<>();
-        Cursor c = getReadableDatabase().rawQuery("SELECT id,name,phone FROM clients ORDER BY name", null);
+        Cursor c = getReadableDatabase().rawQuery("SELECT id,name,phone FROM clients", null);
         while (c.moveToNext()) rows.add(new Client(c.getLong(0), dec(c.getString(1)), dec(c.getString(2))));
         c.close();
+        Collections.sort(rows, (a, b) -> a.name.compareToIgnoreCase(b.name));
         return rows;
     }
 
     List<InventoryItem> inventory() {
         List<InventoryItem> rows = new ArrayList<>();
-        Cursor c = getReadableDatabase().rawQuery("SELECT id,name,category,on_hand,reorder_at,cost,sellingPrice FROM inventory ORDER BY category,name", null);
+        Cursor c = getReadableDatabase().rawQuery("SELECT id,name,category,on_hand,reorder_at,cost,sellingPrice FROM inventory", null);
         while (c.moveToNext()) rows.add(new InventoryItem(c.getLong(0), dec(c.getString(1)), dec(c.getString(2)), c.getInt(3), c.getInt(4), c.getDouble(5), c.getDouble(6)));
         c.close();
+        Collections.sort(rows, (a, b) -> {
+            int cat = a.category.compareToIgnoreCase(b.category);
+            return cat != 0 ? cat : a.name.compareToIgnoreCase(b.name);
+        });
         return rows;
     }
 

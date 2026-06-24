@@ -8,9 +8,13 @@ import java.util.Locale
 
 object SalonUtils {
     @JvmField
-    val DATE_FMT: ThreadLocal<SimpleDateFormat> = ThreadLocal.withInitial { SimpleDateFormat("yyyy-MM-dd", Locale.US) }
+    val DATE_FMT: ThreadLocal<SimpleDateFormat> = object : ThreadLocal<SimpleDateFormat>() {
+        override fun initialValue(): SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    }
     @JvmField
-    val MONTH_YEAR_FMT: ThreadLocal<SimpleDateFormat> = ThreadLocal.withInitial { SimpleDateFormat("MMMM yyyy", Locale.US) }
+    val MONTH_YEAR_FMT: ThreadLocal<SimpleDateFormat> = object : ThreadLocal<SimpleDateFormat>() {
+        override fun initialValue(): SimpleDateFormat = SimpleDateFormat("MMMM yyyy", Locale.US)
+    }
 
     @JvmStatic
     fun formatDate(c: Calendar): String = DATE_FMT.get()!!.format(c.time)

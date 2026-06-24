@@ -5,6 +5,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -190,10 +191,10 @@ private fun BookingCalendar(
                         val hasPending = pendingDates.contains(date)
                         val isWeekend = dow >= 5
                         val bgColor = when {
-                            selected -> MaterialTheme.colorScheme.primary
-                            isToday -> MaterialTheme.colorScheme.primary.copy(alpha = if (isSystemInDarkTheme()) 0.25f else 0.12f)
-                            isWeekend -> if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceVariant else Rose.copy(alpha = 0.4f)
-                            else -> if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surface else Cell
+                            selected -> Brand
+                            isToday -> Brand.copy(alpha = 0.12f)
+                            isWeekend -> Rose.copy(alpha = 0.4f)
+                            else -> Color(0xFFF8FAF8)
                         }
                         Box(
                             modifier = Modifier
@@ -210,7 +211,7 @@ private fun BookingCalendar(
                         ) {
                             Text(
                                 currentDay.toString(),
-                                color = if (selected) Color.White else if (isToday) MaterialTheme.colorScheme.primary else if (isWeekend) if (isSystemInDarkTheme()) Color.White else MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurface,
+                                color = if (selected) Color.White else if (isToday) Brand else if (isWeekend) (if (isSystemInDarkTheme()) Color.White else Accent) else Ink,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
                             )

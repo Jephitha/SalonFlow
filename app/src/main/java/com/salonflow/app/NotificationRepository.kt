@@ -69,6 +69,18 @@ class NotificationRepository private constructor(context: Context) {
         }
     }
 
+    fun markAllAsRead() {
+        val list = findAll()
+        var changed = false
+        for (i in list.indices) {
+            if (!list[i].read) {
+                list[i] = list[i].copy(read = true)
+                changed = true
+            }
+        }
+        if (changed) saveAll(list)
+    }
+
     fun clearAll() {
         prefs.edit().remove(KEY_NOTIFICATIONS).apply()
     }

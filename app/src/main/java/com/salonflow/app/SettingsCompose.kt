@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
@@ -204,11 +206,11 @@ private fun SettingsHub(onNavigate: (String) -> Unit) {
         SettingsRow("Notifications", "Morning and overdue alerts", onClick = { onNavigate("notifications") })
         SettingsRow("Backup & Restore", "Local backup tools", onClick = { onNavigate("backup") })
         Text(
-            "Version 0.0.1",
+            "Version ${BuildConfig.VERSION_NAME}",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 13.sp,
             fontStyle = FontStyle.Italic,
-            modifier = Modifier.padding(top = 10.dp, bottom = 14.dp).align(Alignment.CenterHorizontally),
+            modifier = Modifier.padding(top = 4.dp, bottom = 4.dp).align(Alignment.CenterHorizontally),
         )
     }
 }
@@ -221,7 +223,7 @@ private fun SettingsRow(title: String, subtitle: String, onClick: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(10.dp)) {
             Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
         }
@@ -493,12 +495,12 @@ private fun BackupScreen(
                         Toast.makeText(activity, "Set a PIN in Security settings first", Toast.LENGTH_SHORT).show()
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                colors = ButtonDefaults.buttonColors(containerColor = Brand, contentColor = Color.White),
                 modifier = Modifier.weight(1f),
             ) { Text("Backup data") }
             Button(
                 onClick = { activity.restoreBackup() },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                colors = ButtonDefaults.buttonColors(containerColor = Accent, contentColor = Color.White),
                 modifier = Modifier.weight(1f),
             ) { Text("Restore data") }
         }
@@ -518,7 +520,7 @@ private fun BackupScreen(
                     driveSignedIn = false
                     driveEmail = null
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                colors = ButtonDefaults.buttonColors(containerColor = Danger, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Sign out") }
         } else {
@@ -530,7 +532,7 @@ private fun BackupScreen(
                         driveEmail = driveManager.getSignedInEmail()
                     })
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                colors = ButtonDefaults.buttonColors(containerColor = Brand, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Sign in to Google Drive") }
         }

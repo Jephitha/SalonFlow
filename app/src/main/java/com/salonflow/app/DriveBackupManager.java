@@ -491,6 +491,37 @@ public class DriveBackupManager {
         return null;
     }
 
+    private void deleteOldDriveBackups(String token, String folderId, String keepFileName) {
+        try {
+            String query = URLEncoder.encode(
+                    "'" + folderId + "' in parents and trashed = false",
+                    "UTF-8"
+            );
+            HttpURLConnection conn = (HttpURLConnection) new URL(
+                    DRIVE_API + "/files?q=" + query + "&fields=files(id,name)"
+            ).openConnection();
+            conn.setRequestProperty("Authorization", "Bearer " + token);
+            conn.setRequestMethod("GET");
+
+            if (conn.getResponseCode() != 200) return;
+
+            String body = readStream(conn.getInputStream());
+            JSONArray files = new JSONObject(body).optJSONArray("files");
+            if (files == null) return;
+
+            for (int i = 0; i < files.length(); i++) {
+                JSONObject obj = files.getJSONObject(i);
+                String id = obj.optString("id", null);
+                String name = obj.optString("name", null);
+                if (id != null && name != null && !name.equals(keepFileName)) {
+                    deleteFile(token, id);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to delete old Drive backups", e);
+        }
+    }
+
     private String readStream(InputStream in) throws Exception {
         if (in == null) return "(no error body)";
         BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));

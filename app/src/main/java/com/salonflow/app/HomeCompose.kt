@@ -163,7 +163,7 @@ private fun ExpandableCommissionLine(
                 .clickable(onClick = onToggle),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(row.stylistName, color = MaterialTheme.colorScheme.primary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(row.stylistName, color = Brand, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             Text(fmt(money, row.totalCommission), color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         }
         if (expanded) {
@@ -185,7 +185,7 @@ private fun ExpandableCommissionLine(
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Total commission", color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                Text(fmt(money, row.totalCommission), color = MaterialTheme.colorScheme.primary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(fmt(money, row.totalCommission), color = Brand, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

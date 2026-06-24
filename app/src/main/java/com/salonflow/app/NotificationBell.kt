@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -120,11 +121,8 @@ private fun NotificationDialog(
     onDismiss: () -> Unit,
 ) {
     var notifications by remember { mutableStateOf(repo.findAll()) }
-    var showArchived by remember { mutableStateOf(false) }
-
     val unread = notifications.filter { !it.read }
-    val displayList = if (showArchived) notifications else unread
-    val hasMore = unread.size > 10
+    val read = notifications.filter { it.read }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -135,12 +133,26 @@ private fun NotificationDialog(
                 .heightIn(max = 500.dp),
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    "Notifications",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "Notifications",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (unread.isNotEmpty()) {
+                        TextButton(onClick = {
+                            repo.markAllAsRead()
+                            notifications = repo.findAll()
+                        }) {
+                            Text("Read all", fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
                 Spacer(Modifier.size(12.dp))
 
                 if (notifications.isEmpty()) {
@@ -154,30 +166,44 @@ private fun NotificationDialog(
                         textAlign = TextAlign.Center,
                     )
                 } else {
-                    val items = if (showArchived || !hasMore) displayList
-                                else displayList.take(10)
-
                     LazyColumn(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        items(items, key = { it.id }) { notification ->
-                            SwipeableNotificationItem(
-                                notification = notification,
-                                onMarkRead = {
-                                    repo.markAsRead(notification.id)
-                                    notifications = repo.findAll()
-                                },
-                            )
+                        if (unread.isNotEmpty()) {
+                            items(unread, key = { it.id }) { notification ->
+                                SwipeableNotificationItem(
+                                    notification = notification,
+                                    onMarkRead = {
+                                        repo.markAsRead(notification.id)
+                                        notifications = repo.findAll()
+                                    },
+                                )
+                            }
                         }
-                    }
-
-                    if (!showArchived && hasMore) {
-                        TextButton(
-                            onClick = { showArchived = true },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text("See previous notifications", color = MaterialTheme.colorScheme.primary)
+                        if (read.isNotEmpty()) {
+                            item {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+                                    Text(
+                                        " Read ",
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+                                }
+                            }
+                            items(read, key = { it.id }) { notification ->
+                                SwipeableNotificationItem(
+                                    notification = notification,
+                                    onMarkRead = {},
+                                )
+                            }
                         }
                     }
                 }
@@ -217,8 +243,10 @@ private fun SwipeableNotificationItem(
                         offsetX = 0f
                     },
                     onDrag = { change, dragAmount ->
-                        change.consume()
-                        offsetX = (offsetX + dragAmount.x).coerceIn(-threshold * 2, threshold * 2)
+                        if (abs(dragAmount.x) > abs(dragAmount.y)) {
+                            change.consume()
+                            offsetX = (offsetX + dragAmount.x).coerceIn(-threshold * 2, threshold * 2)
+                        }
                     },
                 )
             }

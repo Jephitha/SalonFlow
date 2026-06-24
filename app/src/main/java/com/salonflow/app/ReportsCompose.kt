@@ -16,6 +16,7 @@ import kotlin.math.max
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -506,7 +507,7 @@ private fun OutstandingScreen(database: SalonDatabase, money: NumberFormat, onBa
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("\u2190", color = MaterialTheme.colorScheme.primary, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
+                Text("\u2190", color = Brand, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
                 Text("Outstanding Balances", color = MaterialTheme.colorScheme.onSurface, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
             val outstandingClients = clients.filter { client ->
@@ -551,7 +552,7 @@ private fun SalesDetailScreen(database: SalonDatabase, reportMonth: Calendar, mo
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("\u2190", color = MaterialTheme.colorScheme.primary, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
+                Text("\u2190", color = Brand, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
                 Text("Product Sales", color = MaterialTheme.colorScheme.onSurface, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
             if (sales.isEmpty()) {
@@ -589,7 +590,7 @@ private fun ExpensesDetailScreen(database: SalonDatabase, reportMonth: Calendar,
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("\u2190", color = MaterialTheme.colorScheme.primary, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
+                Text("\u2190", color = Brand, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
                 Text("Expenses", color = MaterialTheme.colorScheme.onSurface, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
             if (expenses.isEmpty()) {
@@ -637,7 +638,7 @@ private fun CommissionDetailScreen(database: SalonDatabase, reportMonth: Calenda
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("\u2190", color = MaterialTheme.colorScheme.primary, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
+                Text("\u2190", color = Brand, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onBack))
                 Text("Commission", color = MaterialTheme.colorScheme.onSurface, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
             if (stylistCommMap.isEmpty()) {
@@ -651,7 +652,7 @@ private fun CommissionDetailScreen(database: SalonDatabase, reportMonth: Calenda
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(name, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                            Text(money.format(total / 100.0), color = MaterialTheme.colorScheme.secondary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Text(money.format(total / 100.0), color = Accent, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

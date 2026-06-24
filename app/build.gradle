@@ -5,6 +5,32 @@ plugins {
     id "com.google.gms.google-services"
 }
 
+def readVersionCode() {
+    def props = new Properties()
+    file("version.properties").withInputStream { props.load(it) }
+    (props["VERSION_CODE"] as String).toInteger()
+}
+def readVersionName() {
+    def props = new Properties()
+    file("version.properties").withInputStream { props.load(it) }
+    props["VERSION_NAME"] as String
+}
+
+tasks.matching { it.name.startsWith("assembleRelease") }.configureEach {
+    doFirst {
+        def props = new Properties()
+        file("version.properties").withInputStream { props.load(it) }
+        def code = (props["VERSION_CODE"] as String).toInteger() + 1
+        def name = props["VERSION_NAME"] as String
+        def parts = name.split("\\.")
+        def minor = (parts.length > 1 ? parts[1].toInteger() : 0) + 1
+        props["VERSION_CODE"] = String.valueOf(code)
+        props["VERSION_NAME"] = parts[0] + "." + String.valueOf(minor)
+        file("version.properties").withOutputStream { props.store(it, "Auto-incremented by build") }
+        println "Next build will be " + props["VERSION_NAME"] + " (code " + props["VERSION_CODE"] + ")"
+    }
+}
+
 android {
     namespace "com.salonflow.app"
     compileSdk 36
@@ -13,8 +39,8 @@ android {
         applicationId "com.salonflow.app"
         minSdk 23
         targetSdk 36
-        versionCode 2
-        versionName "2.0"
+        versionCode readVersionCode()
+        versionName readVersionName()
     }
 
     signingConfigs {
