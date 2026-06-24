@@ -30,9 +30,6 @@ public class BackupReceiver extends BroadcastReceiver {
             return;
         }
 
-        SweeperSync.sweep(context, SweeperSync.PRIORITY_REGULAR);
-        FirestoreManager.getInstance(context).reportSweep("regular");
-
         AppSettings settings = new AppSettings(context);
         if (!settings.hasDriveKey()) return;
 

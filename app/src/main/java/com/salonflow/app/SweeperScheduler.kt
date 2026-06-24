@@ -85,35 +85,7 @@ object SweeperScheduler {
         pi?.let { alarmMgr.cancel(it); it.cancel() }
     }
 
-    fun registerConnectivityObserver(context: Context) {
-        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val callback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                Log.i(TAG, "Network available, checking pending sweep")
-                val prefs = context.getSharedPreferences(SweeperConfig.PREFS_SWEEPER, Context.MODE_PRIVATE)
-                if (prefs.getBoolean(SweeperConfig.KEY_SWEEP_PENDING, false)) {
-                    Log.i(TAG, "Running pending sweep after connectivity restore")
-                    GlobalScope.launch(Dispatchers.IO) {
-                        try {
-                            SweeperSync.sweep(context, SweeperSync.PRIORITY_NETWORK_RECOVERY)
-                            FirestoreManager.getInstance(context).reportSweep("networkRecovery")
-                            SweeperConfig.clearPendingSweep(context)
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Recovery sweep failed", e)
-                        }
-                    }
-                }
-            }
-        }
-        val request = NetworkRequest.Builder()
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            .build()
-        cm.registerNetworkCallback(request, callback)
-        Log.i(TAG, "Connectivity observer registered")
-    }
-
     fun init(context: Context) {
         scheduleAlarms(context)
-        registerConnectivityObserver(context)
     }
 }

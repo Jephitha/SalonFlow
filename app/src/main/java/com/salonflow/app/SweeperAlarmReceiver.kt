@@ -60,7 +60,6 @@ class SweeperAlarmReceiver : BroadcastReceiver() {
             }
             Intent.ACTION_BOOT_COMPLETED -> {
                 SweeperScheduler.scheduleAlarms(context)
-                runPendingSweep(context)
             }
         }
     }
@@ -78,22 +77,6 @@ class SweeperAlarmReceiver : BroadcastReceiver() {
 
     private fun releaseWakeLock(wl: PowerManager.WakeLock?) {
         try { wl?.release() } catch (_: Exception) {}
-    }
-
-    private fun runPendingSweep(context: Context) {
-        val prefs = context.getSharedPreferences(SweeperConfig.PREFS_SWEEPER, Context.MODE_PRIVATE)
-        if (prefs.getBoolean(SweeperConfig.KEY_SWEEP_PENDING, false)) {
-            Log.i(TAG, "Running pending sweep")
-            CoroutineScope(Dispatchers.IO + Job()).launch {
-                    try {
-                        SweeperSync.sweep(context, SweeperSync.PRIORITY_BOOT_RECOVERY)
-                        FirestoreManager.getInstance(context).reportSweep("bootRecovery")
-                        SweeperConfig.clearPendingSweep(context)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Pending sweep failed", e)
-                }
-            }
-        }
     }
 
     companion object {

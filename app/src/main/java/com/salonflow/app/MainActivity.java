@@ -156,8 +156,6 @@ public class MainActivity extends AppCompatActivity {
         scheduleDailyBackup();
         scheduleDailyReminders();
         requestPermissionsIfNeeded();
-        SweeperSync.sweep(this, SweeperSync.PRIORITY_APP_OPENED);
-        FirestoreManager.getInstance(this).reportSweep("appOpened");
         renderApp();
         maybeStartOnboarding();
         if (!settings.hasPin()) content.post(() -> {
@@ -178,14 +176,9 @@ public class MainActivity extends AppCompatActivity {
         if (settings != null && settings.isAppLockEnabled() && !appUnlocked) {
             if (settings.isWithinGracePeriod()) {
                 appUnlocked = true;
-                SweeperSync.sweep(this, SweeperSync.PRIORITY_APP_OPENED);
-                FirestoreManager.getInstance(this).reportSweep("appOpened");
             } else {
                 showPinUnlockDialog();
             }
-        } else {
-            SweeperSync.sweep(this, SweeperSync.PRIORITY_APP_OPENED);
-            FirestoreManager.getInstance(this).reportSweep("appOpened");
         }
     }
 
