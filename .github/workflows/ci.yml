@@ -20,5 +20,6 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
         with:
           cache-provider: basic
-      - run: ./gradlew assembleDebug
-      - run: ./gradlew lintDebug
+      - run: ./gradlew assembleDebug --warning-mode all --stacktrace
+      - run: ./gradlew lintDebug --warning-mode all --stacktrace
+
