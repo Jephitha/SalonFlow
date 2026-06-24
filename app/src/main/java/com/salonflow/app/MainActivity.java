@@ -28,6 +28,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
@@ -80,10 +81,18 @@ public class MainActivity extends AppCompatActivity {
     private boolean appUnlocked = false;
     private boolean viewingSettings = false;
     private String settingsSection = "home";
-    private static final ThreadLocal<SimpleDateFormat> MONTH_YEAR_FMT = ThreadLocal.withInitial(() -> new SimpleDateFormat("MMMM yyyy", Locale.US));
-    private static final ThreadLocal<SimpleDateFormat> YEAR_FMT = ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy", Locale.US));
-    private static final ThreadLocal<SimpleDateFormat> MONTH_FMT = ThreadLocal.withInitial(() -> new SimpleDateFormat("MMM", Locale.US));
-    private static final ThreadLocal<SimpleDateFormat> DATE_TIME_FMT = ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US));
+    private static final ThreadLocal<SimpleDateFormat> MONTH_YEAR_FMT = new ThreadLocal<SimpleDateFormat>() {
+        @Override protected SimpleDateFormat initialValue() { return new SimpleDateFormat("MMMM yyyy", Locale.US); }
+    };
+    private static final ThreadLocal<SimpleDateFormat> YEAR_FMT = new ThreadLocal<SimpleDateFormat>() {
+        @Override protected SimpleDateFormat initialValue() { return new SimpleDateFormat("yyyy", Locale.US); }
+    };
+    private static final ThreadLocal<SimpleDateFormat> MONTH_FMT = new ThreadLocal<SimpleDateFormat>() {
+        @Override protected SimpleDateFormat initialValue() { return new SimpleDateFormat("MMM", Locale.US); }
+    };
+    private static final ThreadLocal<SimpleDateFormat> DATE_TIME_FMT = new ThreadLocal<SimpleDateFormat>() {
+        @Override protected SimpleDateFormat initialValue() { return new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US); }
+    };
     private final Deque<String> navHistory = new ArrayDeque<>();
     private final Deque<String> settingsNavStack = new ArrayDeque<>();
     private long lastBackPressMs = 0;
@@ -146,6 +155,32 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
         super.onCreate(savedInstanceState);
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override public void handleOnBackPressed() {
+                if (!navHistory.isEmpty()) {
+                    applyState(navHistory.pop());
+                    renderTabs();
+                    renderSelectedTab();
+                    return;
+                }
+                if (viewingSettings) {
+                    viewingSettings = false;
+                    selectedTab = 0;
+                    settingsSection = "home";
+                    renderTabs();
+                    renderSelectedTab();
+                    return;
+                }
+                long now = System.currentTimeMillis();
+                if (now - lastBackPressMs < 1500) {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    return;
+                }
+                lastBackPressMs = now;
+                Toast.makeText(MainActivity.this, "Tap back again to exit", Toast.LENGTH_SHORT).show();
+            }
+        });
         applyNightColors();
         money.setMaximumFractionDigits(0);
         db = new SalonDatabase(this);
@@ -187,31 +222,6 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
         appUnlocked = false;
         viewingSettings = false;
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (!navHistory.isEmpty()) {
-            applyState(navHistory.pop());
-            renderTabs();
-            renderSelectedTab();
-            return;
-        }
-        if (viewingSettings) {
-            viewingSettings = false;
-            selectedTab = 0;
-            settingsSection = "home";
-            renderTabs();
-            renderSelectedTab();
-            return;
-        }
-        long now = System.currentTimeMillis();
-        if (now - lastBackPressMs < 1500) {
-            super.onBackPressed();
-            return;
-        }
-        lastBackPressMs = now;
-        Toast.makeText(this, "Tap back again to exit", Toast.LENGTH_SHORT).show();
     }
 
     private void renderApp() {
@@ -419,7 +429,8 @@ public class MainActivity extends AppCompatActivity {
         int maxDay = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
         Map<String, Integer> counts = new HashMap<>();
         for (SalonDatabase.Booking booking : db.bookingsBetween(SalonUtils.monthStart(visibleMonth), SalonUtils.monthEnd(visibleMonth))) {
-            counts.put(booking.date, counts.getOrDefault(booking.date, 0) + 1);
+            Integer count = counts.get(booking.date);
+            counts.put(booking.date, (count == null ? 0 : count) + 1);
         }
         String[] names = {"S", "M", "T", "W", "T", "F", "S"};
         LinearLayout header = row();

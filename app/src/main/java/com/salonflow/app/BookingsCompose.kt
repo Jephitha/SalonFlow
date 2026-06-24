@@ -81,7 +81,7 @@ private fun BookingsScreen(
     val selectedBookings = database.bookingsForDate(selectedDate)
     val selectedSales = if (isPastDate) database.salesBetween(selectedDate, selectedDate) else emptyList()
 
-            Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) {
+    Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
