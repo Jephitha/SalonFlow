@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "460013065647",
+    "project_id": "salonflowsweeper",
+    "storage_bucket": "salonflowsweeper.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:460013065647:android:47cc2ab7caf1448ea38b5a",
+        "android_client_info": {
+          "package_name": "com.salonflow.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-wZvCTE56p1DeWezpt3R0l2HpIyY4l2g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:460013065647:android:47cc2ab7caf1448ea38b5a",
+        "android_client_info": {
+          "package_name": "com.salonflow.app.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-wZvCTE56p1DeWezpt3R0l2HpIyY4l2g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1278,7 +1278,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void backupNow() {
         try {
-            db.backupNow();
+            File newBackup = db.backupNow();
+            db.deleteOldBackups(newBackup);
             rerender();
         } catch (Exception e) {
             Toast.makeText(this, "Backup failed: " + e.getMessage(), Toast.LENGTH_LONG).show();

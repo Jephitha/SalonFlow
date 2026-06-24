@@ -32,6 +32,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -100,7 +101,7 @@ private fun SettingsScreen(
                 if (currentSection != "home") {
                     Text(
                         text = "\u2190",
-                        color = Brand,
+                        color = MaterialTheme.colorScheme.primary,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.clickable {
@@ -319,7 +320,7 @@ private fun InventoryScreen(
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(items, key = { it.id }) { item ->
                         val status = if (item.onHand <= item.reorderAt) "Reorder" else "Healthy"
-                        val statusColor = if (item.onHand <= item.reorderAt) Danger else Brand
+                        val statusColor = if (item.onHand <= item.reorderAt) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                         Card(
                             modifier = Modifier.fillMaxWidth().clickable { onEdit(item) },
                             shape = RoundedCornerShape(8.dp),
@@ -358,7 +359,7 @@ private fun SecurityScreen(
             Text("No PIN set. Create one to secure the app.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
             Button(
                 onClick = onCreatePin,
-                colors = ButtonDefaults.buttonColors(containerColor = Brand),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Create PIN") }
         } else {
@@ -366,7 +367,7 @@ private fun SecurityScreen(
             SecurityToggleRow("App Lock", settings.isAppLockEnabled(), onToggleAppLock)
             Button(
                 onClick = { activity.showSetPinDialog() },
-                colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = Brand),
+                colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Change PIN") }
         }
@@ -389,7 +390,7 @@ private fun SecurityToggleRow(label: String, checked: Boolean, onToggle: () -> U
             Switch(
                 checked = checked,
                 onCheckedChange = { onToggle() },
-                colors = SwitchDefaults.colors(checkedTrackColor = Brand),
+                colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary),
             )
         }
     }
@@ -449,7 +450,7 @@ private fun BackupScreen(
                         keyboardActions = KeyboardActions(onDone = { /* confirm button handles it */ }),
                         singleLine = true,
                         isError = pinError.isNotEmpty(),
-                        supportingText = if (pinError.isNotEmpty()) {{ Text(pinError, color = Danger) }} else null,
+                        supportingText = if (pinError.isNotEmpty()) {{ Text(pinError, color = MaterialTheme.colorScheme.error) }} else null,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }

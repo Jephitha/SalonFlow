@@ -18,7 +18,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.lightColorScheme
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -94,28 +94,28 @@ private fun HomeScreen(database: SalonDatabase) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 androidx.compose.material3.Button(
                     onClick = { range = "today" },
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = if (range == "today") Brand else Soft, contentColor = if (range == "today") Color.White else Brand),
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = if (range == "today") MaterialTheme.colorScheme.primary else Soft, contentColor = if (range == "today") Color.White else MaterialTheme.colorScheme.primary),
                 ) { Text("Today") }
                 androidx.compose.material3.Button(
                     onClick = { range = "7" },
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = if (range == "7") Brand else Soft, contentColor = if (range == "7") Color.White else Brand),
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = if (range == "7") MaterialTheme.colorScheme.primary else Soft, contentColor = if (range == "7") Color.White else MaterialTheme.colorScheme.primary),
                 ) { Text("Last 7 days") }
             }
             MetricRow(
-                Metric("Bookings", if (range == "today") todayBookings.toString() else bookings.size.toString(), if (range == "today") "Today" else "Last 7 days", Brand),
-                Metric("Collected", fmt(money, collected), if (range == "today") "Today" else "Last 7 days", Brand),
+                Metric("Bookings", if (range == "today") todayBookings.toString() else bookings.size.toString(), if (range == "today") "Today" else "Last 7 days", MaterialTheme.colorScheme.primary),
+                Metric("Collected", fmt(money, collected), if (range == "today") "Today" else "Last 7 days", MaterialTheme.colorScheme.primary),
             )
             MetricRow(
-                Metric("Balances", fmt(money, outstanding), "Outstanding", if (outstanding > 0) Danger else Brand),
-                Metric("Business revenue", fmt(money, businessRevenue), "Collected \u2212 costs", if (businessRevenue < 0) Danger else Brand),
+                Metric("Balances", fmt(money, outstanding), "Outstanding", if (outstanding > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary),
+                Metric("Business revenue", fmt(money, businessRevenue), "Collected \u2212 costs", if (businessRevenue < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary),
             )
             MetricRow(
-                Metric("Bookings revenue", fmt(money, bookingsGross), if (range == "today") "Today" else "Last 7 days", Brand),
-                Metric("Product sales", fmt(money, salesGross), if (range == "today") "Today" else "Last 7 days", Brand),
+                Metric("Bookings revenue", fmt(money, bookingsGross), if (range == "today") "Today" else "Last 7 days", MaterialTheme.colorScheme.primary),
+                Metric("Product sales", fmt(money, salesGross), if (range == "today") "Today" else "Last 7 days", MaterialTheme.colorScheme.primary),
             )
             MetricRow(
-                Metric("COGS", fmt(money, cogs), if (range == "today") "Today" else "Last 7 days", Muted),
-                Metric("Stock purchases", fmt(money, stockPurchases), "Product costs", Muted),
+                Metric("COGS", fmt(money, cogs), if (range == "today") "Today" else "Last 7 days", MaterialTheme.colorScheme.onSurfaceVariant),
+                Metric("Stock purchases", fmt(money, stockPurchases), "Product costs", MaterialTheme.colorScheme.onSurfaceVariant),
             )
             CardBlock("Commissions") {
                 val paidBookings = database.bookingsBetween(start, end).filter { it.status == "completed" }
@@ -180,7 +180,7 @@ private fun ExpandableCommissionLine(
                         Text(it.serviceName, color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         Text("Value ${fmt(money, it.totalValue)}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                     }
-                    Text(fmt(money, it.commission), color = Brand, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(fmt(money, it.commission), color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -207,7 +207,7 @@ private fun RecentTransactionRow(item: RecentTransaction) {
                 Text(item.title, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 Text(item.subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
             }
-            Text(item.amount, color = if (item.expense) Danger else Brand, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text(item.amount, color = if (item.expense) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

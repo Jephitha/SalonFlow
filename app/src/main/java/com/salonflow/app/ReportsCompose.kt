@@ -21,6 +21,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -186,7 +187,7 @@ private fun ReportsScreen(database: SalonDatabase) {
                 ) {
                     Button(
                         onClick = { reportMonth = (reportMonth.clone() as Calendar).apply { add(Calendar.MONTH, -1) } },
-                        colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = Brand),
+                        colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = MaterialTheme.colorScheme.primary),
                         modifier = Modifier.weight(0.3f),
                     ) { Text("<") }
                     Text(
@@ -199,7 +200,7 @@ private fun ReportsScreen(database: SalonDatabase) {
                     )
                     Button(
                         onClick = { reportMonth = (reportMonth.clone() as Calendar).apply { add(Calendar.MONTH, 1) } },
-                        colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = Brand),
+                        colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = MaterialTheme.colorScheme.primary),
                         modifier = Modifier.weight(0.3f),
                     ) { Text(">") }
                 }
@@ -222,14 +223,14 @@ private fun ReportsScreen(database: SalonDatabase) {
                         title = "Bookings revenue",
                         value = money.format(grossBookings / 100.0),
                         note = "Service bookings",
-                        valueColor = Brand,
+                        valueColor = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.weight(1f),
                     )
                     KpiCard(
                         title = "Product sales",
                         value = money.format(grossSales / 100.0),
                         note = "Walk-in sales",
-                        valueColor = Brand,
+                        valueColor = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.weight(1f),
                         onClick = {
                             if (grossSales > 0) showSales = true
@@ -246,14 +247,14 @@ private fun ReportsScreen(database: SalonDatabase) {
                         title = "Collected",
                         value = money.format(collected / 100.0),
                         note = "Payments received",
-                        valueColor = Brand,
+                        valueColor = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.weight(1f),
                     )
                     KpiCard(
                         title = "Expenses",
                         value = money.format(expenses / 100.0),
                         note = "Operating costs",
-                        valueColor = Danger,
+                        valueColor = MaterialTheme.colorScheme.error,
                         modifier = Modifier.weight(1f),
                         onClick = {
                             if (expenses > 0) showExpenses = true
@@ -277,7 +278,7 @@ private fun ReportsScreen(database: SalonDatabase) {
                         title = "Outstanding",
                         value = money.format(outstanding / 100.0),
                         note = "Unpaid balances",
-                        valueColor = Accent,
+                        valueColor = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.weight(1f),
                         onClick = {
                             if (outstanding > 0) showOutstanding = true
@@ -294,14 +295,14 @@ private fun ReportsScreen(database: SalonDatabase) {
                         title = "Profit on sales",
                         value = money.format(profit / 100.0),
                         note = "Sales \u2212 product cost",
-                        valueColor = if (profit >= 0) Brand else Danger,
+                        valueColor = if (profit >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                         modifier = Modifier.weight(1f),
                     )
                     KpiCard(
                         title = "Commission",
                         value = money.format(commission / 100.0),
                         note = "Stylist payouts",
-                        valueColor = Accent,
+                        valueColor = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.weight(1f),
                         onClick = {
                             if (commission > 0) showCommission = true
@@ -330,7 +331,7 @@ private fun ReportsScreen(database: SalonDatabase) {
                         }
                         Text(
                             money.format(businessRevenue / 100.0),
-                            color = if (businessRevenue >= 0) Brand else Danger,
+                            color = if (businessRevenue >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                             fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 4.dp),
@@ -338,7 +339,7 @@ private fun ReportsScreen(database: SalonDatabase) {
                         if (outstanding > 0) {
                             Text(
                                 "Outstanding: ${money.format(outstanding / 100.0)}",
-                                color = Accent,
+                                color = MaterialTheme.colorScheme.secondary,
                                 fontSize = 13.sp,
                             )
                         }
@@ -419,11 +420,11 @@ private fun ReportsScreen(database: SalonDatabase) {
                                     .padding(top = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Text(label, color = Brand, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                 Spacer(Modifier.width(4.dp))
-                                Text(bar, color = Brand, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(bar, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                 Spacer(Modifier.width(4.dp))
-                                Text(money.format(value / 100.0), color = Brand, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(money.format(value / 100.0), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                             }
                         }
                     }
@@ -530,7 +531,7 @@ private fun OutstandingScreen(database: SalonDatabase, money: NumberFormat, onBa
                                 Text(client.name, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                                 Text(if (client.phone.isEmpty()) "" else client.phone, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                             }
-                            Text(money.format(bal / 100.0), color = if (bal > 0) Danger else Brand, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Text(money.format(bal / 100.0), color = if (bal > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -568,7 +569,7 @@ private fun SalesDetailScreen(database: SalonDatabase, reportMonth: Calendar, mo
                                 Text(sale.description, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                                 Text("${sale.date} \u2022 ${sale.payment}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                             }
-                            Text(money.format(sale.amount / 100.0), color = Brand, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Text(money.format(sale.amount / 100.0), color = MaterialTheme.colorScheme.primary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -606,7 +607,7 @@ private fun ExpensesDetailScreen(database: SalonDatabase, reportMonth: Calendar,
                                 Text(expense.category, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                                 Text(if (expense.note.isBlank()) expense.date else "${expense.date} \u2022 ${expense.note}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                             }
-                            Text(money.format(expense.amount / 100.0), color = Danger, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Text(money.format(expense.amount / 100.0), color = MaterialTheme.colorScheme.error, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
