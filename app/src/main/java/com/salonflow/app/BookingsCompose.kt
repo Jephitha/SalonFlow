@@ -1,6 +1,7 @@
 package com.salonflow.app
 
 import android.view.View
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,7 +25,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -115,7 +115,7 @@ private fun BookingsScreen(
                 }
             }
             if (isPastDate && selectedSales.isNotEmpty()) {
-                Text("Sales on $selectedDate", color = Accent, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                Text("Sales on $selectedDate", color = MaterialTheme.colorScheme.secondary, fontSize = 17.sp, fontWeight = FontWeight.Bold)
                 selectedSales.forEach { sale ->
                     SaleCard(
                         sale = sale,
@@ -145,7 +145,7 @@ private fun BookingCalendar(
         ) {
             Button(
                 onClick = onPreviousMonth,
-                colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = Brand),
+                colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier.weight(0.3f),
             ) { Text("<") }
             Text(
@@ -158,7 +158,7 @@ private fun BookingCalendar(
             )
             Button(
                 onClick = onNextMonth,
-                colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = Brand),
+                colors = ButtonDefaults.buttonColors(containerColor = Soft, contentColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier.weight(0.3f),
             ) { Text(">") }
         }
@@ -168,7 +168,7 @@ private fun BookingCalendar(
                     label,
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
-                    color = if (index >= 5) Accent else Muted,
+                    color = if (index >= 5) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
                 )
@@ -203,7 +203,7 @@ private fun BookingCalendar(
                                 .clip(RoundedCornerShape(7.dp))
                                 .background(bgColor)
                                 .then(
-                                    if (isToday && !selected) Modifier.border(1.5.dp, Brand, RoundedCornerShape(7.dp))
+                                    if (isToday && !selected) Modifier.border(1.5.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp))
                                     else Modifier
                                 )
                                 .clickable { onDateSelected(date) },
@@ -222,7 +222,7 @@ private fun BookingCalendar(
                                         .padding(top = 5.dp, end = 5.dp)
                                         .size(7.dp)
                                         .clip(CircleShape)
-                                        .background(Accent),
+                                        .background(MaterialTheme.colorScheme.secondary),
                                 )
                             }
                         }
@@ -285,8 +285,8 @@ private fun SaleCard(sale: SalonDatabase.Sale, amount: String) {
                 Text("${sale.payment}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(amount, color = Accent, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("sale", color = Accent, fontSize = 11.sp)
+                Text(amount, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text("sale", color = MaterialTheme.colorScheme.secondary, fontSize = 11.sp)
             }
         }
     }
@@ -300,9 +300,9 @@ private fun StatusPill(status: String) {
         else -> Rose
     }
     val textColor = when (status) {
-        "completed" -> Brand
+        "completed" -> MaterialTheme.colorScheme.primary
         "pending" -> Amber
-        else -> Danger
+        else -> MaterialTheme.colorScheme.error
     }
     Text(
         text = status,
