@@ -6,31 +6,31 @@ plugins {
 }
 
 android {
-    namespace "com.salonflow.reader"
-    compileSdk 36
+    namespace = "com.salonflow.reader"
+    compileSdk = 36
 
     defaultConfig {
-        applicationId "com.salonflow.reader"
-        minSdk 23
-        targetSdk 36
-        versionCode 1
-        versionName "1.0"
+        applicationId = "com.salonflow.reader"
+        minSdk = 23
+        targetSdk = 36
+        versionCode = 1
+        versionName = "1.0"
     }
 
     buildTypes {
         release {
-            minifyEnabled true
+            minifyEnabled = true
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
 
     buildFeatures {
-        compose true
+        compose = true
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {

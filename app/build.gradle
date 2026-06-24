@@ -32,46 +32,46 @@ tasks.matching { it.name.startsWith("assembleRelease") }.configureEach {
 }
 
 android {
-    namespace "com.salonflow.app"
-    compileSdk 36
+    namespace = "com.salonflow.app"
+    compileSdk = 36
 
     defaultConfig {
-        applicationId "com.salonflow.app"
-        minSdk 23
-        targetSdk 36
-        versionCode readVersionCode()
-        versionName readVersionName()
+        applicationId = "com.salonflow.app"
+        minSdk = 23
+        targetSdk = 36
+        versionCode = readVersionCode()
+        versionName = readVersionName()
     }
 
     signingConfigs {
         release {
-            storeFile file("salonflow-release.keystore")
-            storePassword System.getenv("KEYSTORE_PASSWORD")
-            keyAlias "salonflow"
-            keyPassword System.getenv("KEYSTORE_PASSWORD")
+            storeFile = file("salonflow-release.keystore")
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
+            keyAlias = "salonflow"
+            keyPassword = System.getenv("KEYSTORE_PASSWORD")
         }
     }
 
     buildTypes {
         debug {
-            applicationIdSuffix ".dev"
+            applicationIdSuffix = ".dev"
         }
         release {
-            debuggable false
-            minifyEnabled true
+            debuggable = false
+            minifyEnabled = true
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
-            signingConfig signingConfigs.release
+            signingConfig = signingConfigs.release
         }
     }
 
     buildFeatures {
-        compose true
-        buildConfig true
+        compose = true
+        buildConfig = true
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
